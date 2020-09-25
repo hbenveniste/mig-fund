@@ -1,1 +1,1 @@
-# mig-fund
+# Data and code used in the following journal article: H. Benveniste, M. Oppenheimer, M. Fleurbaey, Effect of Border Policy on Exposure and Vulnerability to Climate Change, Proceedings of the National Academy of Sciences (in press, 2020).
