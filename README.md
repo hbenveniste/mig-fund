@@ -1,1 +1,1 @@
-Data and code used in the following journal article: H. Benveniste, M. Oppenheimer, M. Fleurbaey, Effect of Border Policy on Exposure and Vulnerability to Climate Change, Proceedings of the National Academy of Sciences (in press, 2020).
+Data and code used in the following journal article: H. Benveniste, M. Oppenheimer, M. Fleurbaey (2020). “Effect of Border Policy on Exposure and Vulnerability to Climate Change." Proceedings of the National Academy of Sciences, 117 (43), 26692-26702. doi: 10.1073/pnas.2007597117.
