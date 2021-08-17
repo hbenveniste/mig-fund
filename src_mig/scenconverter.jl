@@ -34,7 +34,7 @@ using Mimi
         end
 
         for r in d.regions
-            if t.t < TimestepIndex(1050)
+            if t.t < 1050
                 v.scenpgrowth[t, r] = (p.population[t+1, r] / p.population[t, r] - 1.) * 100.
                 v.scenypcgrowth[t, r] = (p.income[t+1, r] / p.income[t, r] / (1 + 0.01 * v.scenpgrowth[t, r]) - 1.) * 100.
             else
@@ -42,7 +42,7 @@ using Mimi
                 v.scenypcgrowth[t, r] = v.scenypcgrowth[t - 1, r]
             end
             
-            if t.t < TimestepIndex(1050)
+            if t.t < 1050
                 v.energint[t, r] = p.energuse[t, r] / p.income[t,r]
                 v.emissint[t, r] = p.emission[t, r] / p.energuse[t, r]
                 v.energint[t + 1, r] = p.energuse[t + 1, r] / p.income[t + 1,r]
