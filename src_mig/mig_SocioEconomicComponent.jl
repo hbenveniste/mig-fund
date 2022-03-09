@@ -72,10 +72,14 @@ using Mimi
                 v.income[t, r] = (1 + v.ygrowth[t, r]) * oldincome - p.mitigationcost[t - 1, r] + p.transfer[t - 1, r]
             end
 
-            # Check for unrealistic values
+            # Check for unrealistic values; steady state after 2300
             for r in d.regions
-                if v.income[t, r] < 0.01 * p.population[t, r]
-                    v.income[t, r] = 0.01 * p.population[t, r]
+                if t <= TimestepValue(2300)
+                    if v.income[t, r] < 0.01 * p.population[t, r]
+                        v.income[t, r] = 0.01 * p.population[t, r]
+                    end
+                else
+                    v.income[t, r] = v.income[t-1, r]
                 end
             end
 

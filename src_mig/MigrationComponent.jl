@@ -190,7 +190,7 @@ using Mimi
 
                     # We keep remittances constant over the lifetime of the migrant at remshare:
                     rem = v.migstock[t, source, destination] * v.remshare[t,source, destination] * (1.0 - p.remcost[source, destination]) * ypc / 1000000000
-                    v.rem[t, source, destination] = 0.0 #rem
+                    v.rem[t, source, destination] = rem
                 end
             end
 
