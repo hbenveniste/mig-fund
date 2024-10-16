@@ -1,14 +1,17 @@
-using CSV, DataFrames, Statistics, Query, DelimitedFiles, FileIO, ExcelFiles
+using CSV, DataFrames, Statistics, Query, DelimitedFiles, FileIO, ExcelFiles, XLSX
 
 
 regions = ["USA", "CAN", "WEU", "JPK", "ANZ", "EEU", "FSU", "MDE", "CAM", "LAM", "SAS", "SEA", "CHI", "MAF", "SSA", "SIS"]
 ssps = ["SSP1","SSP2","SSP3","SSP4","SSP5"]     # We use ["SSP1-RCP1.9","SSP2-RCP4.5","SSP3-RCP7.0","SSP4-RCP6.0","SSP5-RCP8.5"]
 
 # Determine carbon price at FUND region level using SSP scenarios
-# !! The carbon price is the same for all regions !!
+# The carbon price is the same for all regions
 
 # Reading data from SSP database (IIASA). Units: US$2005/t CO2
-cpdata = load(joinpath(@__DIR__, "../input_data/Carbonprice_SSPdatabase.xlsx"), "data!A1:P21") |> DataFrame
+cpdata = XLSX.readdata(joinpath(@__DIR__, "../../input_data/Carbonprice_SSPdatabase.xlsx"), "data!A1:P21")
+cpdata = DataFrame(cpdata, :auto)
+rename!(cpdata, Symbol.(Vector(cpdata[1,:])))
+deleteat!(cpdata,1)
 select!(cpdata, Not(union(1,4:6)))
 rename!(cpdata, :Region => :sspregion, :Scenario => :scen)
 cpdata[!,:scen] = map(x->SubString(x,1:4),cpdata[:,:scen])
@@ -25,7 +28,7 @@ regions_ssp = DataFrame(
     region = regions,
     sspregion = ["OECD","OECD","OECD","OECD","OECD","OECD","REF","MAF","LAM","LAM","ASIA","ASIA","ASIA","MAF","MAF","LAM"]
 )
-cpdata = join(cpdata, regions_ssp, on = :sspregion)
+cpdata = innerjoin(cpdata, regions_ssp, on = :sspregion)
 
 # Stack data
 cpdata_s = stack(cpdata,3:12)
@@ -38,9 +41,9 @@ cp_allyr = DataFrame(
     scen = repeat(ssps, inner = length(2010:2100)*length(regions)),
     region = repeat(regions, inner = length(2010:2100), outer = length(ssps))
 )
-cp = join(cpdata_s[:,Not(:sspregion)], cp_allyr, on = [:year, :scen, :region], kind = :outer)
+cp = outerjoin(cpdata_s[:,Not(:sspregion)], cp_allyr, on = [:year, :scen, :region])
 sort!(cp, [:scen, :region, :year])
-for i in 1:size(cp,1)
+for i in eachindex(cp[:,1])
     if mod(cp[i,:year], 10) != 0
         ind = i - mod(cp[i,:year], 10)
         floor = cp[ind,:cprice] ; ceiling = cp[ind+10,:cprice]
@@ -75,7 +78,7 @@ cp_scen[!,:cprice] .*= 3.67
 
 # Sorting the data
 regionsdf = DataFrame(region = regions, index = 1:16)
-cp_scen = join(cp_scen, regionsdf, on = :region)
+cp_scen = innerjoin(cp_scen, regionsdf, on = :region)
 sort!(cp_scen, [:scen, :year, :index])
 
 # Plot results
@@ -84,7 +87,7 @@ cp_scen |> @filter(_.year >= 2010 && _.year <= 2100) |> @vlplot(
     x = {"year:o", axis={labelFontSize=16, values = 2010:10:2100}, title=nothing}, 
     y = {"mean(cprice)", title="Carbon price, USD/tC", axis={labelFontSize=16,titleFontSize=16}}, 
     color = {"scen:n", scale={scheme=:category10}, legend={title="Climate scenario", titleFontSize=20, titleLimit=220, symbolSize=60, labelFontSize=18, labelLimit=280}}
-) |> save(joinpath(@__DIR__, "../results/emissions/", "cprice_mitig.png"))
+) |> save(joinpath(@__DIR__, "../results/emissions/", "FigS2.png"))
 
 # Write data for each SSP separately
 for s in ssps
