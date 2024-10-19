@@ -123,6 +123,7 @@ rename!(temp_p, :temp_migFUND => :temp_currentborders, :temp_migFUND_cb => :temp
 temp_all = stack(temp_p, [:temp_currentborders,:temp_closedborders,:temp_moreopen,:temp_bordersnorthsouth], [:scen, :year])
 rename!(temp_all, :variable => :temp_type, :value => :temp)
 temp_all[!,:border] = [SubString(String(temp_all[i,:temp_type]), 6) for i in eachindex(temp_all[:,1])]
+
 temp_all |> @filter(_.year <= 2100) |> @vlplot(
     width=500, height=400, 
     mark={:point, size=80}, 
@@ -135,5 +136,5 @@ temp_all |> @filter(_.year <= 2100) |> @vlplot(
     x = {"year:o", axis={labelFontSize=16, values = 1950:10:2100}, title=nothing}, y = {"temp:q", aggregate=:mean,typ=:quantitative,title="Temperature increase, degC", axis={labelFontSize=16,titleFontSize=16}}, 
     color = {"scen:n", scale={scheme=:category10}, legend={title="Climate scenario", titleFontSize=20, titleLimit=220, symbolSize=60, labelFontSize=18, labelLimit=280}},
     detail = "border:o"
-) |> save(joinpath(@__DIR__, "../results/temperature/", "Fig3b.png"))
+) |> save(joinpath(@__DIR__, "../results/temperature/", "Fig3b_update.png"))
 # Also Fig.S16b for runs without remittances

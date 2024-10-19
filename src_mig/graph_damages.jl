@@ -4,7 +4,7 @@ using Statistics, DataFrames, Query
 using MimiFUND
 
 include("main_mig.jl")
-
+include("fund_ssp.jl")
 
 # Run models
 m_ssp1_nomig = getmigrationmodel(scen="SSP1",migyesno="nomig")
@@ -177,105 +177,103 @@ damages[:,:damgdp_migFUND_ob] = damages[:,:damages_migFUND_ob] ./ (damages[:,:gd
 damages[:,:damgdp_migFUND_2w] = damages[:,:damages_migFUND_2w] ./ (damages[:,:gdp_migFUND_2w] .* 10^9)
 rename!(damages, :damages_migFUND => :dam_currentborders, :damages_migFUND_cb => :dam_closedborders, :damages_migFUND_ob => :dam_moreopen, :damages_migFUND_2w => :dam_bordersnorthsouth)
 rename!(damages, :damgdp_migFUND => :damgdp_currentborders, :damgdp_migFUND_cb => :damgdp_closedborders, :damgdp_migFUND_ob => :damgdp_moreopen, :damgdp_migFUND_2w => :damgdp_bordersnorthsouth)
-rename!(damages, :damages_origFUND => :dam_origFUND, :damages_sspFUND => :dam_sspFUND)
 
 
 # Plot composition of damages per impact for each border policy, SSP and region
-dam_impact = damages[:,[:year, :scen, :fundregion, :dam_currentborders, :dam_sspFUND, :dam_origFUND, :dam_closedborders, :dam_moreopen, :dam_bordersnorthsouth]]
-dam_impact[!,:dam_migFUND] = dam_impact[!,:dam_currentborders]
+dam_impact = damages[:,[:year, :scen, :fundregion, :dam_currentborders, :dam_closedborders, :dam_moreopen, :dam_bordersnorthsouth]]
 for imp in [:water,:forests,:heating,:cooling,:agcost,:drycost,:protcost,:hurrdam,:extratropicalstormsdam,:eloss_other,:species,:deadcost,:morbcost,:wetcost]
     imp_curr = vcat(
-        collect(Iterators.flatten(m_ssp1_nomig[:impactaggregation,imp][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-        collect(Iterators.flatten(m_ssp2_nomig[:impactaggregation,imp][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-        collect(Iterators.flatten(m_ssp3_nomig[:impactaggregation,imp][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-        collect(Iterators.flatten(m_ssp4_nomig[:impactaggregation,imp][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-        collect(Iterators.flatten(m_ssp5_nomig[:impactaggregation,imp][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:]))
+        collect(Iterators.flatten(m_ssp1_nomig[:impactaggregation,imp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+        collect(Iterators.flatten(m_ssp2_nomig[:impactaggregation,imp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+        collect(Iterators.flatten(m_ssp3_nomig[:impactaggregation,imp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+        collect(Iterators.flatten(m_ssp4_nomig[:impactaggregation,imp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+        collect(Iterators.flatten(m_ssp5_nomig[:impactaggregation,imp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:]))
     )
     dam_impact[:,Symbol(string(imp,"_currentborders"))] = imp_curr
     imp_closed = vcat(
-        collect(Iterators.flatten(m_ssp1_nomig_cb[:impactaggregation,imp][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-        collect(Iterators.flatten(m_ssp2_nomig_cb[:impactaggregation,imp][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-        collect(Iterators.flatten(m_ssp3_nomig_cb[:impactaggregation,imp][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-        collect(Iterators.flatten(m_ssp4_nomig_cb[:impactaggregation,imp][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-        collect(Iterators.flatten(m_ssp5_nomig_cb[:impactaggregation,imp][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:]))
+        collect(Iterators.flatten(m_ssp1_nomig_cb[:impactaggregation,imp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+        collect(Iterators.flatten(m_ssp2_nomig_cb[:impactaggregation,imp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+        collect(Iterators.flatten(m_ssp3_nomig_cb[:impactaggregation,imp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+        collect(Iterators.flatten(m_ssp4_nomig_cb[:impactaggregation,imp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+        collect(Iterators.flatten(m_ssp5_nomig_cb[:impactaggregation,imp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:]))
     )
     dam_impact[:,Symbol(string(imp,"_closedborders"))] = imp_closed
     imp_more = vcat(
-        collect(Iterators.flatten(m_ssp1_nomig_ob[:impactaggregation,imp][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-        collect(Iterators.flatten(m_ssp2_nomig_ob[:impactaggregation,imp][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-        collect(Iterators.flatten(m_ssp3_nomig_ob[:impactaggregation,imp][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-        collect(Iterators.flatten(m_ssp4_nomig_ob[:impactaggregation,imp][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-        collect(Iterators.flatten(m_ssp5_nomig_ob[:impactaggregation,imp][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:]))
+        collect(Iterators.flatten(m_ssp1_nomig_ob[:impactaggregation,imp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+        collect(Iterators.flatten(m_ssp2_nomig_ob[:impactaggregation,imp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+        collect(Iterators.flatten(m_ssp3_nomig_ob[:impactaggregation,imp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+        collect(Iterators.flatten(m_ssp4_nomig_ob[:impactaggregation,imp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+        collect(Iterators.flatten(m_ssp5_nomig_ob[:impactaggregation,imp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:]))
     )
     dam_impact[:,Symbol(string(imp,"_moreopen"))] = imp_more
     imp_ns = vcat(
-        collect(Iterators.flatten(m_ssp1_nomig_2w[:impactaggregation,imp][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-        collect(Iterators.flatten(m_ssp2_nomig_2w[:impactaggregation,imp][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-        collect(Iterators.flatten(m_ssp3_nomig_2w[:impactaggregation,imp][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-        collect(Iterators.flatten(m_ssp4_nomig_2w[:impactaggregation,imp][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-        collect(Iterators.flatten(m_ssp5_nomig_2w[:impactaggregation,imp][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:]))
+        collect(Iterators.flatten(m_ssp1_nomig_2w[:impactaggregation,imp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+        collect(Iterators.flatten(m_ssp2_nomig_2w[:impactaggregation,imp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+        collect(Iterators.flatten(m_ssp3_nomig_2w[:impactaggregation,imp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+        collect(Iterators.flatten(m_ssp4_nomig_2w[:impactaggregation,imp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+        collect(Iterators.flatten(m_ssp5_nomig_2w[:impactaggregation,imp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:]))
     )
     dam_impact[:,Symbol(string(imp,"_bordersnorthsouth"))] = imp_ns
 end
 # We count as climate change damage only those attributed to differences in income resulting from climate change impacts
 imp_curr = vcat(
-    collect(Iterators.flatten(m_ssp1_nomig[:migration,:deadmigcost][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-    collect(Iterators.flatten(m_ssp2_nomig[:migration,:deadmigcost][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-    collect(Iterators.flatten(m_ssp3_nomig[:migration,:deadmigcost][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-    collect(Iterators.flatten(m_ssp4_nomig[:migration,:deadmigcost][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-    collect(Iterators.flatten(m_ssp5_nomig[:migration,:deadmigcost][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:]))
+    collect(Iterators.flatten(m_ssp1_nomig[:migration,:deadmigcost][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp2_nomig[:migration,:deadmigcost][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp3_nomig[:migration,:deadmigcost][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp4_nomig[:migration,:deadmigcost][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp5_nomig[:migration,:deadmigcost][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:]))
 )
 imp_nocc_curr = vcat(
-    collect(Iterators.flatten(m_ssp1_nocc[:migration,:deadmigcost][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-    collect(Iterators.flatten(m_ssp2_nocc[:migration,:deadmigcost][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-    collect(Iterators.flatten(m_ssp3_nocc[:migration,:deadmigcost][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-    collect(Iterators.flatten(m_ssp4_nocc[:migration,:deadmigcost][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-    collect(Iterators.flatten(m_ssp5_nocc[:migration,:deadmigcost][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:]))
+    collect(Iterators.flatten(m_ssp1_nocc[:migration,:deadmigcost][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp2_nocc[:migration,:deadmigcost][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp3_nocc[:migration,:deadmigcost][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp4_nocc[:migration,:deadmigcost][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp5_nocc[:migration,:deadmigcost][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:]))
 )
 dam_impact[:,Symbol(string(:deadmigcost,"_currentborders"))] = imp_curr - imp_nocc_curr
 imp_closed = vcat(
-    collect(Iterators.flatten(m_ssp1_nomig_cb[:migration,:deadmigcost][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-    collect(Iterators.flatten(m_ssp2_nomig_cb[:migration,:deadmigcost][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-    collect(Iterators.flatten(m_ssp3_nomig_cb[:migration,:deadmigcost][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-    collect(Iterators.flatten(m_ssp4_nomig_cb[:migration,:deadmigcost][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-    collect(Iterators.flatten(m_ssp5_nomig_cb[:migration,:deadmigcost][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:]))
+    collect(Iterators.flatten(m_ssp1_nomig_cb[:migration,:deadmigcost][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp2_nomig_cb[:migration,:deadmigcost][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp3_nomig_cb[:migration,:deadmigcost][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp4_nomig_cb[:migration,:deadmigcost][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp5_nomig_cb[:migration,:deadmigcost][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:]))
 )
 imp_nocc_closed = vcat(
-    collect(Iterators.flatten(m_ssp1_nocc_cb[:migration,:deadmigcost][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-    collect(Iterators.flatten(m_ssp2_nocc_cb[:migration,:deadmigcost][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-    collect(Iterators.flatten(m_ssp3_nocc_cb[:migration,:deadmigcost][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-    collect(Iterators.flatten(m_ssp4_nocc_cb[:migration,:deadmigcost][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-    collect(Iterators.flatten(m_ssp5_nocc_cb[:migration,:deadmigcost][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:]))
+    collect(Iterators.flatten(m_ssp1_nocc_cb[:migration,:deadmigcost][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp2_nocc_cb[:migration,:deadmigcost][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp3_nocc_cb[:migration,:deadmigcost][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp4_nocc_cb[:migration,:deadmigcost][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp5_nocc_cb[:migration,:deadmigcost][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:]))
 )
 dam_impact[:,Symbol(string(:deadmigcost,"_closedborders"))] = imp_closed - imp_nocc_closed
 imp_more = vcat(
-    collect(Iterators.flatten(m_ssp1_nomig_ob[:migration,:deadmigcost][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-    collect(Iterators.flatten(m_ssp2_nomig_ob[:migration,:deadmigcost][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-    collect(Iterators.flatten(m_ssp3_nomig_ob[:migration,:deadmigcost][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-    collect(Iterators.flatten(m_ssp4_nomig_ob[:migration,:deadmigcost][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-    collect(Iterators.flatten(m_ssp5_nomig_ob[:migration,:deadmigcost][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:]))
+    collect(Iterators.flatten(m_ssp1_nomig_ob[:migration,:deadmigcost][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp2_nomig_ob[:migration,:deadmigcost][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp3_nomig_ob[:migration,:deadmigcost][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp4_nomig_ob[:migration,:deadmigcost][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp5_nomig_ob[:migration,:deadmigcost][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:]))
 )
 imp_nocc_more = vcat(
-    collect(Iterators.flatten(m_ssp1_nocc_ob[:migration,:deadmigcost][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-    collect(Iterators.flatten(m_ssp2_nocc_ob[:migration,:deadmigcost][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-    collect(Iterators.flatten(m_ssp3_nocc_ob[:migration,:deadmigcost][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-    collect(Iterators.flatten(m_ssp4_nocc_ob[:migration,:deadmigcost][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-    collect(Iterators.flatten(m_ssp5_nocc_ob[:migration,:deadmigcost][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:]))
+    collect(Iterators.flatten(m_ssp1_nocc_ob[:migration,:deadmigcost][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp2_nocc_ob[:migration,:deadmigcost][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp3_nocc_ob[:migration,:deadmigcost][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp4_nocc_ob[:migration,:deadmigcost][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp5_nocc_ob[:migration,:deadmigcost][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:]))
 )
 dam_impact[:,Symbol(string(:deadmigcost,"_moreopen"))] = imp_more - imp_nocc_more
 imp_ns = vcat(
-    collect(Iterators.flatten(m_ssp1_nomig_2w[:migration,:deadmigcost][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-    collect(Iterators.flatten(m_ssp2_nomig_2w[:migration,:deadmigcost][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-    collect(Iterators.flatten(m_ssp3_nomig_2w[:migration,:deadmigcost][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-    collect(Iterators.flatten(m_ssp4_nomig_2w[:migration,:deadmigcost][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-    collect(Iterators.flatten(m_ssp5_nomig_2w[:migration,:deadmigcost][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:]))
+    collect(Iterators.flatten(m_ssp1_nomig_2w[:migration,:deadmigcost][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp2_nomig_2w[:migration,:deadmigcost][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp3_nomig_2w[:migration,:deadmigcost][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp4_nomig_2w[:migration,:deadmigcost][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp5_nomig_2w[:migration,:deadmigcost][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:]))
 )
 imp_nocc_ns = vcat(
-    collect(Iterators.flatten(m_ssp1_nocc_2w[:migration,:deadmigcost][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-    collect(Iterators.flatten(m_ssp2_nocc_2w[:migration,:deadmigcost][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-    collect(Iterators.flatten(m_ssp3_nocc_2w[:migration,:deadmigcost][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-    collect(Iterators.flatten(m_ssp4_nocc_2w[:migration,:deadmigcost][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:])),
-    collect(Iterators.flatten(m_ssp5_nocc_2w[:migration,:deadmigcost][MimiFUND.getindexfromyear(1960):10:MimiFUND.getindexfromyear(2100),:]))
+    collect(Iterators.flatten(m_ssp1_nocc_2w[:migration,:deadmigcost][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp2_nocc_2w[:migration,:deadmigcost][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp3_nocc_2w[:migration,:deadmigcost][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp4_nocc_2w[:migration,:deadmigcost][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp5_nocc_2w[:migration,:deadmigcost][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:]))
 )
 dam_impact[:,Symbol(string(:deadmigcost,"_bordersnorthsouth"))] = imp_ns - imp_nocc_ns
 # Impacts coded as negative if damaging: recode as positive
@@ -326,13 +324,53 @@ for s in ssps
         y={"impact_dam:q", aggregate = :sum, stack = true, title = "Billion USD2005", axis={titleFontSize=18, labelFontSize=16}},
         color={"impact:n",scale={scheme="category20c"},legend={title=string("Impact type"), titleFontSize=20, titleLimit=220, symbolSize=60, labelFontSize=18, labelLimit=220}},
         resolve = {scale={y=:independent}}, title={text=string("Damages in 2100, current borders, ", s), fontSize=20}
-    ) |> save(joinpath(@__DIR__, "../results/damages/", string("impdam_",s,"_mitig.png")))
+    ) |> save(joinpath(@__DIR__, "../results/damages/", string("impdam_",s,"_mitig_update.png")))
 end
 
 
 # Calculate the proportion of migrants moving from a less to a more exposed region (in terms of damages/GDP)
-exposed = innerjoin(move[:,1:8], rename(rename(
-    move[:,1:8], 
+move_all = DataFrame(
+    year = repeat(years, outer = length(ssps)*length(regions)*length(regions)),
+    scen = repeat(ssps,inner = length(regions)*length(years)*length(regions)),
+    origin = repeat(regions, outer = length(ssps)*length(regions), inner=length(years)),
+    destination = repeat(regions, outer = length(ssps), inner=length(years)*length(regions))
+)
+
+move_currentborders = vcat(
+    collect(Iterators.flatten(m_ssp1_nomig[:migration,:move][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:,:])),
+    collect(Iterators.flatten(m_ssp2_nomig[:migration,:move][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:,:])),
+    collect(Iterators.flatten(m_ssp3_nomig[:migration,:move][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:,:])),
+    collect(Iterators.flatten(m_ssp4_nomig[:migration,:move][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:,:])),
+    collect(Iterators.flatten(m_ssp5_nomig[:migration,:move][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:,:]))
+)
+move_all[:,:move_currentborders] = move_currentborders
+move_closedborders = vcat(
+    collect(Iterators.flatten(m_ssp1_nomig_cb[:migration,:move][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:,:])),
+    collect(Iterators.flatten(m_ssp2_nomig_cb[:migration,:move][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:,:])),
+    collect(Iterators.flatten(m_ssp3_nomig_cb[:migration,:move][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:,:])),
+    collect(Iterators.flatten(m_ssp4_nomig_cb[:migration,:move][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:,:])),
+    collect(Iterators.flatten(m_ssp5_nomig_cb[:migration,:move][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:,:]))
+)
+move_all[:,:move_closedborders] = move_closedborders
+move_moreopen = vcat(
+    collect(Iterators.flatten(m_ssp1_nomig_ob[:migration,:move][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:,:])),
+    collect(Iterators.flatten(m_ssp2_nomig_ob[:migration,:move][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:,:])),
+    collect(Iterators.flatten(m_ssp3_nomig_ob[:migration,:move][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:,:])),
+    collect(Iterators.flatten(m_ssp4_nomig_ob[:migration,:move][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:,:])),
+    collect(Iterators.flatten(m_ssp5_nomig_ob[:migration,:move][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:,:]))
+)
+move_all[:,:move_moreopen] = move_moreopen
+move_bordersnorthsouth = vcat(
+    collect(Iterators.flatten(m_ssp1_nomig_2w[:migration,:move][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:,:])),
+    collect(Iterators.flatten(m_ssp2_nomig_2w[:migration,:move][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:,:])),
+    collect(Iterators.flatten(m_ssp3_nomig_2w[:migration,:move][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:,:])),
+    collect(Iterators.flatten(m_ssp4_nomig_2w[:migration,:move][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:,:])),
+    collect(Iterators.flatten(m_ssp5_nomig_2w[:migration,:move][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:,:]))
+)
+move_all[:,:move_bordersnorthsouth] = move_bordersnorthsouth
+
+exposed = innerjoin(move_all[!,1:8], rename(rename(
+    move_all[!,1:8], 
     :origin=>:dest,
     :destination=>:origin,
     :move_currentborders=>:move_otherdir_currentborders,
@@ -400,14 +438,14 @@ exposed_all[(exposed_all[:,:btype].!="overallclosed"),:] |> @vlplot(
     color={"btype:o",scale={scheme=:dark2},legend={title=string("Migrant outflows"), titleFontSize=24, titleLimit=240, symbolSize=100, labelFontSize=24, labelLimit=260, offset=10}},
     shape="btype:o",
     resolve = {scale={size=:independent}}
-) |> save(joinpath(@__DIR__, "../results/damages/", string("Fig2.png")))
+) |> save(joinpath(@__DIR__, "../results/damages/", string("Fig2_update.png")))
 # Also Fig.S17 for runs without remittances
 
 
 ###################################### Plot geographical maps #####################################
 world110m = dataset("world-110m")
 
-isonum_fundregion = CSV.read(joinpath(@__DIR__,"../input_data/isonum_fundregion.csv"))
+isonum_fundregion = CSV.read(joinpath(@__DIR__,"../input_data/isonum_fundregion.csv"), DataFrame)
 
 damgdp_maps = leftjoin(damages, isonum_fundregion, on = :fundregion)
 for btype in [:_currentborders,:_closedborders,:_moreopen,:_bordersnorthsouth]
@@ -424,7 +462,7 @@ for s in ssps
         transform = [{lookup=:id, from={data=filter(row -> row[:scen] == s && row[:year] == 2100, damgdp_maps), key=:isonum, fields=[string(:damgdp_currentborders)]}}],
         projection={type=:naturalEarth1}, title = {text=string("Exposure, current borders, 2100, ", s),fontSize=24}, 
         color = {:damgdp_currentborders, type=:quantitative, scale={scheme=:pinkyellowgreen,domain=[-5,5]}, legend={title=string("% GDP"), titleFontSize=20, titleLimit=220, symbolSize=60, labelFontSize=24, labelLimit=220, offset=2}}
-    ) |> save(joinpath(@__DIR__, "../results/world_maps/", string("damgdp_currentborders_", s, "_mitig.png")))
+    ) |> save(joinpath(@__DIR__, "../results/world_maps/", string("damgdp_currentborders_", s, "_mitig_update.png")))
 end
 
 

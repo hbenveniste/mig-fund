@@ -136,7 +136,7 @@ em_world_stack |> @filter(_.year >= 2015 && _.year <= 2100)  |> @vlplot()+@vlplo
     y = {"worldem:q", aggregate=:mean,type=:quantitative,title="World CO2 emissions, Mt CO2", axis={labelFontSize=16,titleFontSize=16}}, 
     color = {"scen:n", scale={scheme=:category10}, legend=nothing},
     detail = "worldem_type:o"
-) |> save(joinpath(@__DIR__, "../results/emissions/", "Fig3a.png"))
+) |> save(joinpath(@__DIR__, "../results/emissions/", "Fig3a_update.png"))
 # Also Fig.S16a for runs without remittances
 
 
@@ -156,7 +156,7 @@ for s in ssps
         transform = [{lookup=:id, from={data=filter(row -> row[:scen] == s && row[:year] == 2100, em_maps), key=:isonum, fields=[string(:em_migFUND)]}}],
         projection={type=:naturalEarth1}, title = {text=string("Emissions levels by 2100 for current borders, ", s),fontSize=24}, 
         color = {:em_migFUND, type=:quantitative, scale={scheme=:greens,domain=[-1000,9000]}, legend={title=string("MtCO2"), titleFontSize=20, titleLimit=220, symbolSize=60, labelFontSize=24, labelLimit=220, offset=2}}
-    ) |> save(joinpath(@__DIR__, "../results/world_maps/", string("em_currentborders_", s, "_mitig.png")))
+    ) |> save(joinpath(@__DIR__, "../results/world_maps/", string("em_currentborders_", s, "_mitig_update.png")))
 end
 for s in ssps
     @vlplot(width=800, height=600) + @vlplot(mark={:geoshape, stroke = :lightgray}, 
@@ -164,7 +164,7 @@ for s in ssps
         transform = [{lookup=:id, from={data=filter(row -> row[:scen] == s && row[:year] == 2100, em_maps), key=:isonum, fields=[string(:emdiff,:_closedborders)]}}],
         projection={type=:naturalEarth1}, title = {text=string("Closed borders, 2100, ", s),fontSize=24}, 
         color = {Symbol(string(:emdiff,:_closedborders)), type=:quantitative, scale={domain=[-20,20], scheme=:redblue}, legend={title="% vs current", titleFontSize=20, symbolSize=60, labelFontSize=24}}
-    ) |> save(joinpath(@__DIR__, "../results/world_maps/", string("emdiff",:_closedborders,"_", s, "_mitig.png")))
+    ) |> save(joinpath(@__DIR__, "../results/world_maps/", string("emdiff",:_closedborders,"_", s, "_mitig_update.png")))
 end
 for s in ssps
     @vlplot(width=800, height=600) + @vlplot(mark={:geoshape, stroke = :lightgray}, 
@@ -172,7 +172,7 @@ for s in ssps
         transform = [{lookup=:id, from={data=filter(row -> row[:scen] == s && row[:year] == 2100, em_maps), key=:isonum, fields=[string(:emdiff,:_moreopen)]}}],
         projection={type=:naturalEarth1}, title = {text=string("More open borders, 2100, ", s),fontSize=24}, 
         color = {Symbol(string(:emdiff,:_moreopen)), type=:quantitative, scale={domain=[-20,20], scheme=:redblue}, legend={title="% vs current", titleFontSize=20, symbolSize=60, labelFontSize=24}}
-    ) |> save(joinpath(@__DIR__, "../results/world_maps/", string("emdiff",:_moreopen,"_", s, "_mitig.png")))
+    ) |> save(joinpath(@__DIR__, "../results/world_maps/", string("emdiff",:_moreopen,"_", s, "_mitig_update.png")))
 end
 for s in ssps
     @vlplot(width=800, height=600) + @vlplot(mark={:geoshape, stroke = :lightgray}, 
@@ -180,5 +180,5 @@ for s in ssps
         transform = [{lookup=:id, from={data=filter(row -> row[:scen] == s && row[:year] == 2100, em_maps), key=:isonum, fields=[string(:emdiff,:_bordersnorthsouth)]}}],
         projection={type=:naturalEarth1}, title = {text=string("North/South borders, 2100, ", s),fontSize=24}, 
         color = {Symbol(string(:emdiff,:_bordersnorthsouth)), type=:quantitative, scale={domain=[-20,20], scheme=:redblue}, legend={title="% vs current", titleFontSize=20, symbolSize=60, labelFontSize=24}}
-    ) |> save(joinpath(@__DIR__, "../results/world_maps/", string("emdiff",:_bordersnorthsouth,"_", s, "_mitig.png")))
+    ) |> save(joinpath(@__DIR__, "../results/world_maps/", string("emdiff",:_bordersnorthsouth,"_", s, "_mitig_update.png")))
 end

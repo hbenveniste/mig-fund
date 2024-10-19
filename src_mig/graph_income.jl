@@ -193,7 +193,7 @@ for s in ssps
         y={"gdp:q", title = nothing, axis={labelFontSize=16}},
         color={"gdp_type:o",scale={scheme=:darkgreen},legend={title=string("GDP levels, ",s), titleFontSize=20, titleLimit=240, symbolSize=60, labelFontSize=24, labelLimit=280, offset=2}},
         resolve = {scale={y=:independent}}
-    ) |> save(joinpath(@__DIR__, "../results/income/", string("gdp_",s,"_mitig.png")))
+    ) |> save(joinpath(@__DIR__, "../results/income/", string("gdp_",s,"_mitig_update.png")))
 end
 
 
@@ -213,7 +213,7 @@ for s in ["SSP2"]
         transform = [{lookup=:id, from={data=filter(row -> row[:scen] == s && row[:year] == 2100, income_maps), key=:isonum, fields=[string(:ypc_currentborders)]}}],
         projection={type=:naturalEarth1}, title = {text=string("GDP per capita levels by 2100 for current borders, ", s),fontSize=24}, 
         color = {"ypc_currentborders:q", scale={scheme=:greens}, legend={title=string("USD2005/cap"), titleFontSize=20, titleLimit=220, symbolSize=60, labelFontSize=24, labelLimit=220, offset=2}}
-    ) |> save(joinpath(@__DIR__, "../results/world_maps/", string("ypc_currentborders_", s, "_mitig.png")))
+    ) |> save(joinpath(@__DIR__, "../results/world_maps/", string("ypc_currentborders_", s, "_mitig_update.png")))
 end
 for s in ["SSP2"]
     @vlplot(width=800, height=600) + @vlplot(mark={:geoshape, stroke = :lightgray}, 
@@ -221,7 +221,7 @@ for s in ["SSP2"]
         transform = [{lookup=:id, from={data=filter(row -> row[:scen] == s && row[:year] == 2100, income_maps), key=:isonum, fields=[string(:ypcdiff,:_closedborders)]}}],
         projection={type=:naturalEarth1}, title = {text=string("Closed borders, 2100, ", s),fontSize=24}, 
         color = {Symbol(string(:ypcdiff,:_closedborders)), type=:quantitative, scale={domain=[-2,2], scheme=:redblue}, legend={title="% vs current", titleFontSize=20, symbolSize=60, labelFontSize=24}}
-    ) |> save(joinpath(@__DIR__, "../results/world_maps/", string("ypcdiff",:_closedborders,"_", s, "_mitig.png")))
+    ) |> save(joinpath(@__DIR__, "../results/world_maps/", string("ypcdiff",:_closedborders,"_", s, "_mitig_update.png")))
 end
 for s in ["SSP2"]
     @vlplot(width=800, height=600) + @vlplot(mark={:geoshape, stroke = :lightgray}, 
@@ -229,7 +229,7 @@ for s in ["SSP2"]
         transform = [{lookup=:id, from={data=filter(row -> row[:scen] == s && row[:year] == 2100, income_maps), key=:isonum, fields=[string(:ypcdiff,:_moreopen)]}}],
         projection={type=:naturalEarth1}, title = {text=string("More open borders, 2100, ", s),fontSize=24}, 
         color = {Symbol(string(:ypcdiff,:_moreopen)), type=:quantitative, scale={domain=[-2,2], scheme=:redblue}, legend={title="% vs current", titleFontSize=20, symbolSize=60, labelFontSize=24}}
-    ) |> save(joinpath(@__DIR__, "../results/world_maps/", string("ypcdiff",:_moreopen,"_", s, "_mitig.png")))
+    ) |> save(joinpath(@__DIR__, "../results/world_maps/", string("ypcdiff",:_moreopen,"_", s, "_mitig_update.png")))
 end
 for s in ["SSP2"]
     @vlplot(width=800, height=600) + @vlplot(mark={:geoshape, stroke = :lightgray}, 
@@ -237,7 +237,7 @@ for s in ["SSP2"]
         transform = [{lookup=:id, from={data=filter(row -> row[:scen] == s && row[:year] == 2100, income_maps), key=:isonum, fields=[string(:ypcdiff,:_bordersnorthsouth)]}}],
         projection={type=:naturalEarth1}, title = {text=string("North/South borders, 2100, ", s),fontSize=24}, 
         color = {Symbol(string(:ypcdiff,:_bordersnorthsouth)), type=:quantitative, scale={domain=[-2,2], scheme=:redblue}, legend={title="% vs current", titleFontSize=20, symbolSize=60, labelFontSize=24}}
-    ) |> save(joinpath(@__DIR__, "../results/world_maps/", string("ypcdiff",:_bordersnorthsouth,"_", s, "_mitig.png")))
+    ) |> save(joinpath(@__DIR__, "../results/world_maps/", string("ypcdiff",:_bordersnorthsouth,"_", s, "_mitig_update.png")))
 end
 
 
@@ -351,7 +351,7 @@ for s in ssps
         y={"netrem:q", title = nothing, axis={labelFontSize=16}},
         color={"netrem_type:o",scale={scheme=:darkmulti},legend={title=string("Net remittances, ",s), titleFontSize=20, titleLimit=240, symbolSize=60, labelFontSize=24, labelLimit=280, offset=2}},
         resolve = {scale={y=:independent}}
-    ) |> save(joinpath(@__DIR__, "../results/income/", string("netrem_",s,"_mitig.png")))
+    ) |> save(joinpath(@__DIR__, "../results/income/", string("netrem_",s,"_mitig_update.png")))
 end
 
 
@@ -405,10 +405,10 @@ rename!(remshare_all, :variable => :remshare_type, :value => :remshare)
 remshare_all = innerjoin(remshare_all,rename(regions_fullname,:fundregion=>:origin,:regionname=>:originname), on=:origin)
 remshare_all = innerjoin(remshare_all,rename(regions_fullname,:fundregion=>:destination,:regionname=>:destinationname), on=:destination)
 
-remshare_all |> @filter(_.year >= 2015 && _.year <= 2100 && _.remshare_type == Symbol("remshare_currentborders")) |> @vlplot(
+remshare_all |> @filter(_.year >= 2015 && _.year <= 2100 && _.remshare_type == String("remshare_currentborders")) |> @vlplot(
     mark={:errorband, extent=:ci}, width=300, height=250, columns=4, wrap={"destinationname:o", title=nothing, header={labelFontSize=24, titleFontSize=20}}, 
     x={"year:o", axis={labelFontSize=16, values = 2010:10:2100}, title=nothing},
     y={"remshare:q", title = "Share of migrant income", axis={labelFontSize=16,titleFontSize=20,}},
     color={"scen:o",scale={scheme=:category10},legend={title=string("Remshare"), titleFontSize=20, titleLimit=240, symbolSize=80, labelFontSize=24, labelLimit=280, offset=2}},
     resolve = {scale={y=:independent}}
-) |> save(joinpath(@__DIR__, "../results/income/", string("FigS4.png")))
+) |> save(joinpath(@__DIR__, "../results/income/", string("FigS4_update.png")))

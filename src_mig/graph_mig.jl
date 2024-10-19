@@ -78,7 +78,7 @@ ssps = ["SSP1","SSP2","SSP3","SSP4","SSP5"]
 regions = ["USA", "CAN", "WEU", "JPK", "ANZ", "EEU", "FSU", "MDE", "CAM", "LAM", "SAS", "SEA", "CHI", "MAF", "SSA", "SIS"]
 years = 1951:2100
 
-migration = DataFrame(
+migration_df = DataFrame(
     year = repeat(years, outer = length(ssps)*length(regions)),
     scen = repeat(ssps,inner = length(regions)*length(years)),
     fundregion = repeat(regions, outer = length(ssps), inner=length(years)),
@@ -90,7 +90,7 @@ enter_currentborders = vcat(
     collect(Iterators.flatten(m_ssp4_nomig[:migration,:entermig][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
     collect(Iterators.flatten(m_ssp5_nomig[:migration,:entermig][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:]))
 )
-migration[:,:enter_currentborders] = enter_currentborders
+migration_df[:,:enter_currentborders] = enter_currentborders
 leave_currentborders = vcat(
     collect(Iterators.flatten(m_ssp1_nomig[:migration,:leavemig][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
     collect(Iterators.flatten(m_ssp2_nomig[:migration,:leavemig][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
@@ -98,7 +98,7 @@ leave_currentborders = vcat(
     collect(Iterators.flatten(m_ssp4_nomig[:migration,:leavemig][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
     collect(Iterators.flatten(m_ssp5_nomig[:migration,:leavemig][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:]))
 )
-migration[:,:leave_currentborders] = leave_currentborders
+migration_df[:,:leave_currentborders] = leave_currentborders
 
 enter_closedborders = vcat(
     collect(Iterators.flatten(m_ssp1_nomig_cb[:migration,:entermig][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
@@ -107,7 +107,7 @@ enter_closedborders = vcat(
     collect(Iterators.flatten(m_ssp4_nomig_cb[:migration,:entermig][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
     collect(Iterators.flatten(m_ssp5_nomig_cb[:migration,:entermig][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:]))
 )
-migration[:,:enter_closedborders] = enter_closedborders
+migration_df[:,:enter_closedborders] = enter_closedborders
 leave_closedborders = vcat(
     collect(Iterators.flatten(m_ssp1_nomig_cb[:migration,:leavemig][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
     collect(Iterators.flatten(m_ssp2_nomig_cb[:migration,:leavemig][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
@@ -115,7 +115,7 @@ leave_closedborders = vcat(
     collect(Iterators.flatten(m_ssp4_nomig_cb[:migration,:leavemig][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
     collect(Iterators.flatten(m_ssp5_nomig_cb[:migration,:leavemig][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:]))
 )
-migration[:,:leave_closedborders] = leave_closedborders
+migration_df[:,:leave_closedborders] = leave_closedborders
 
 enter_moreopen = vcat(
     collect(Iterators.flatten(m_ssp1_nomig_ob[:migration,:entermig][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
@@ -124,7 +124,7 @@ enter_moreopen = vcat(
     collect(Iterators.flatten(m_ssp4_nomig_ob[:migration,:entermig][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
     collect(Iterators.flatten(m_ssp5_nomig_ob[:migration,:entermig][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:]))
 )
-migration[:,:enter_moreopen] = enter_moreopen
+migration_df[:,:enter_moreopen] = enter_moreopen
 leave_moreopen = vcat(
     collect(Iterators.flatten(m_ssp1_nomig_ob[:migration,:leavemig][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
     collect(Iterators.flatten(m_ssp2_nomig_ob[:migration,:leavemig][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
@@ -132,7 +132,7 @@ leave_moreopen = vcat(
     collect(Iterators.flatten(m_ssp4_nomig_ob[:migration,:leavemig][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
     collect(Iterators.flatten(m_ssp5_nomig_ob[:migration,:leavemig][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:]))
 )
-migration[:,:leave_moreopen] = leave_moreopen
+migration_df[:,:leave_moreopen] = leave_moreopen
 
 enter_bordersnorthsouth = vcat(
     collect(Iterators.flatten(m_ssp1_nomig_2w[:migration,:entermig][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
@@ -141,7 +141,7 @@ enter_bordersnorthsouth = vcat(
     collect(Iterators.flatten(m_ssp4_nomig_2w[:migration,:entermig][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
     collect(Iterators.flatten(m_ssp5_nomig_2w[:migration,:entermig][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:]))
 )
-migration[:,:enter_bordersnorthsouth] = enter_bordersnorthsouth
+migration_df[:,:enter_bordersnorthsouth] = enter_bordersnorthsouth
 leave_bordersnorthsouth = vcat(
     collect(Iterators.flatten(m_ssp1_nomig_2w[:migration,:leavemig][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
     collect(Iterators.flatten(m_ssp2_nomig_2w[:migration,:leavemig][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
@@ -149,17 +149,17 @@ leave_bordersnorthsouth = vcat(
     collect(Iterators.flatten(m_ssp4_nomig_2w[:migration,:leavemig][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
     collect(Iterators.flatten(m_ssp5_nomig_2w[:migration,:leavemig][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:]))
 )
-migration[:,:leave_bordersnorthsouth] = leave_bordersnorthsouth
+migration_df[:,:leave_bordersnorthsouth] = leave_bordersnorthsouth
 
 
 # Look at net migrant flows for different border policies
-migration[!,:netmig_currentborders] = migration[!,:enter_currentborders] .- migration[!,:leave_currentborders]
-migration[!,:netmig_overallclosed] = migration[!,:enter_closedborders] .- migration[!,:leave_closedborders]
-migration[!,:netmig_bordersmoreopen] = migration[!,:enter_moreopen] .- migration[!,:leave_moreopen]
-migration[!,:netmig_northsouthclosed] = migration[!,:enter_bordersnorthsouth] .- migration[!,:leave_bordersnorthsouth]
+migration_df[!,:netmig_currentborders] = migration_df[!,:enter_currentborders] .- migration_df[!,:leave_currentborders]
+migration_df[!,:netmig_overallclosed] = migration_df[!,:enter_closedborders] .- migration_df[!,:leave_closedborders]
+migration_df[!,:netmig_bordersmoreopen] = migration_df[!,:enter_moreopen] .- migration_df[!,:leave_moreopen]
+migration_df[!,:netmig_northsouthclosed] = migration_df[!,:enter_bordersnorthsouth] .- migration_df[!,:leave_bordersnorthsouth]
 
 netmig_all = stack(
-    migration, 
+    migration_df, 
     [:netmig_currentborders,:netmig_overallclosed,:netmig_bordersmoreopen,:netmig_northsouthclosed], 
     [:scen, :fundregion, :year]
 )
@@ -197,7 +197,7 @@ for s in ssps
         y={"netmig:q", title = "Net migrants", axis={labelFontSize=16,titleFontSize=16}},
         color={"netmig_type:o",scale={scheme=:darkmulti},legend={title=string("Net migration, ",s), titleFontSize=20, titleLimit=220, symbolSize=60, labelFontSize=24, labelLimit=280, offset=2}},
         resolve = {scale={y=:independent}}
-    ) |> save(joinpath(@__DIR__, "../results/migflow/", string("netmig_",s,"_mitig.png")))
+    ) |> save(joinpath(@__DIR__, "../results/migflow/", string("netmig_",s,"_mitig_update.png")))
 end
 
 
@@ -209,11 +209,11 @@ m_ssp2_nocc = getmigrationmodel(scen="SSP2",migyesno="nomig")
 m_ssp3_nocc = getmigrationmodel(scen="SSP3",migyesno="nomig")
 m_ssp4_nocc = getmigrationmodel(scen="SSP4",migyesno="nomig")
 m_ssp5_nocc = getmigrationmodel(scen="SSP5",migyesno="nomig")
-update_param!(m_ssp1_nocc, :runwithoutdamage, true)
-update_param!(m_ssp2_nocc, :runwithoutdamage, true)
-update_param!(m_ssp3_nocc, :runwithoutdamage, true)
-update_param!(m_ssp4_nocc, :runwithoutdamage, true)
-update_param!(m_ssp5_nocc, :runwithoutdamage, true)
+update_param!(m_ssp1_nocc, :socioeconomic, :runwithoutdamage, true)
+update_param!(m_ssp2_nocc, :socioeconomic, :runwithoutdamage, true)
+update_param!(m_ssp3_nocc, :socioeconomic, :runwithoutdamage, true)
+update_param!(m_ssp4_nocc, :socioeconomic, :runwithoutdamage, true)
+update_param!(m_ssp5_nocc, :socioeconomic, :runwithoutdamage, true)
 run(m_ssp1_nocc)
 run(m_ssp2_nocc)
 run(m_ssp3_nocc)
@@ -226,11 +226,11 @@ m_ssp2_nocc_cb = getmigrationmodel(scen="SSP2",migyesno="nomig")
 m_ssp3_nocc_cb = getmigrationmodel(scen="SSP3",migyesno="nomig")
 m_ssp4_nocc_cb = getmigrationmodel(scen="SSP4",migyesno="nomig")
 m_ssp5_nocc_cb = getmigrationmodel(scen="SSP5",migyesno="nomig")
-update_param!(m_ssp1_nocc_cb, :runwithoutdamage, true)
-update_param!(m_ssp2_nocc_cb, :runwithoutdamage, true)
-update_param!(m_ssp3_nocc_cb, :runwithoutdamage, true)
-update_param!(m_ssp4_nocc_cb, :runwithoutdamage, true)
-update_param!(m_ssp5_nocc_cb, :runwithoutdamage, true)
+update_param!(m_ssp1_nocc_cb, :socioeconomic, :runwithoutdamage, true)
+update_param!(m_ssp2_nocc_cb, :socioeconomic, :runwithoutdamage, true)
+update_param!(m_ssp3_nocc_cb, :socioeconomic, :runwithoutdamage, true)
+update_param!(m_ssp4_nocc_cb, :socioeconomic, :runwithoutdamage, true)
+update_param!(m_ssp5_nocc_cb, :socioeconomic, :runwithoutdamage, true)
 update_param!(m_ssp1_nocc_cb, :policy, param_border[:policy_zero])
 update_param!(m_ssp2_nocc_cb, :policy, param_border[:policy_zero])
 update_param!(m_ssp3_nocc_cb, :policy, param_border[:policy_zero])
@@ -248,11 +248,11 @@ m_ssp2_nocc_ob = getmigrationmodel(scen="SSP2",migyesno="nomig")
 m_ssp3_nocc_ob = getmigrationmodel(scen="SSP3",migyesno="nomig")
 m_ssp4_nocc_ob = getmigrationmodel(scen="SSP4",migyesno="nomig")
 m_ssp5_nocc_ob = getmigrationmodel(scen="SSP5",migyesno="nomig")
-update_param!(m_ssp1_nocc_ob, :runwithoutdamage, true)
-update_param!(m_ssp2_nocc_ob, :runwithoutdamage, true)
-update_param!(m_ssp3_nocc_ob, :runwithoutdamage, true)
-update_param!(m_ssp4_nocc_ob, :runwithoutdamage, true)
-update_param!(m_ssp5_nocc_ob, :runwithoutdamage, true)
+update_param!(m_ssp1_nocc_ob, :socioeconomic, :runwithoutdamage, true)
+update_param!(m_ssp2_nocc_ob, :socioeconomic, :runwithoutdamage, true)
+update_param!(m_ssp3_nocc_ob, :socioeconomic, :runwithoutdamage, true)
+update_param!(m_ssp4_nocc_ob, :socioeconomic, :runwithoutdamage, true)
+update_param!(m_ssp5_nocc_ob, :socioeconomic, :runwithoutdamage, true)
 update_param!(m_ssp1_nocc_ob, :policy, param_border[:policy_2])
 update_param!(m_ssp2_nocc_ob, :policy, param_border[:policy_2])
 update_param!(m_ssp3_nocc_ob, :policy, param_border[:policy_2])
@@ -270,11 +270,11 @@ m_ssp2_nocc_2w = getmigrationmodel(scen="SSP2",migyesno="nomig")
 m_ssp3_nocc_2w = getmigrationmodel(scen="SSP3",migyesno="nomig")
 m_ssp4_nocc_2w = getmigrationmodel(scen="SSP4",migyesno="nomig")
 m_ssp5_nocc_2w = getmigrationmodel(scen="SSP5",migyesno="nomig")
-update_param!(m_ssp1_nocc_2w, :runwithoutdamage, true)
-update_param!(m_ssp2_nocc_2w, :runwithoutdamage, true)
-update_param!(m_ssp3_nocc_2w, :runwithoutdamage, true)
-update_param!(m_ssp4_nocc_2w, :runwithoutdamage, true)
-update_param!(m_ssp5_nocc_2w, :runwithoutdamage, true)
+update_param!(m_ssp1_nocc_2w, :socioeconomic, :runwithoutdamage, true)
+update_param!(m_ssp2_nocc_2w, :socioeconomic, :runwithoutdamage, true)
+update_param!(m_ssp3_nocc_2w, :socioeconomic, :runwithoutdamage, true)
+update_param!(m_ssp4_nocc_2w, :socioeconomic, :runwithoutdamage, true)
+update_param!(m_ssp5_nocc_2w, :socioeconomic, :runwithoutdamage, true)
 update_param!(m_ssp1_nocc_2w, :policy, param_border[:policy_half])
 update_param!(m_ssp2_nocc_2w, :policy, param_border[:policy_half])
 update_param!(m_ssp3_nocc_2w, :policy, param_border[:policy_half])
@@ -287,7 +287,7 @@ run(m_ssp4_nocc_2w)
 run(m_ssp5_nocc_2w)
 
 # Look at net migrant flows for different border policies
-migration_nocc = migration[:,[:year, :scen, :fundregion, :leave_currentborders, :leave_closedborders, :leave_moreopen, :leave_bordersnorthsouth, :netmig_currentborders, :netmig_overallclosed, :netmig_bordersmoreopen, :netmig_northsouthclosed]]
+migration_nocc = migration_df[!,[:year, :scen, :fundregion, :leave_currentborders, :leave_closedborders, :leave_moreopen, :leave_bordersnorthsouth, :netmig_currentborders, :netmig_overallclosed, :netmig_bordersmoreopen, :netmig_northsouthclosed]]
 
 enter_nocc_currentborders = vcat(
     collect(Iterators.flatten(m_ssp1_nocc[:migration,:entermig][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
@@ -392,7 +392,7 @@ for s in ssps
         x={"year:o", axis={labelFontSize=16, values = 2010:10:2100}, title=nothing},
         y={"ccshare:q", title = "Effect of climate change on global migration flows", axis={labelFontSize=16, titleFontSize=14,values = -0.012:0.004:0.012}, scale={domain=[-0.012,0.012]}},
         color={"border:o",scale={scheme=:darkmulti},legend={title=string("Border policy, ",s), titleFontSize=20, titleLimit=220, symbolSize=60, labelFontSize=24, labelLimit=280, offset=2}}
-    ) |> save(joinpath(@__DIR__, "../results/migflow/", string("leave_ccshare_",s,"_mitig.png")))
+    ) |> save(joinpath(@__DIR__, "../results/migflow/", string("leave_ccshare_",s,"_mitig_update.png")))
 end
 
 
@@ -410,11 +410,11 @@ update_param!(m_ssp2_nofert, :agcbm, map(x->x/10,m_ssp2_nomig[:impactagriculture
 update_param!(m_ssp3_nofert, :agcbm, map(x->x/10,m_ssp2_nomig[:impactagriculture,:agcbm]))
 update_param!(m_ssp4_nofert, :agcbm, map(x->x/10,m_ssp2_nomig[:impactagriculture,:agcbm]))
 update_param!(m_ssp5_nofert, :agcbm, map(x->x/10,m_ssp2_nomig[:impactagriculture,:agcbm]))
-update_param!(m_ssp1_nofert, :consleak, 2.5)
-update_param!(m_ssp2_nofert, :consleak, 2.5)
-update_param!(m_ssp3_nofert, :consleak, 2.5)
-update_param!(m_ssp4_nofert, :consleak, 2.5)
-update_param!(m_ssp5_nofert, :consleak, 2.5)
+update_param!(m_ssp1_nofert, :socioeconomic, :consleak, 2.5)
+update_param!(m_ssp2_nofert, :socioeconomic, :consleak, 2.5)
+update_param!(m_ssp3_nofert, :socioeconomic, :consleak, 2.5)
+update_param!(m_ssp4_nofert, :socioeconomic, :consleak, 2.5)
+update_param!(m_ssp5_nofert, :socioeconomic, :consleak, 2.5)
 run(m_ssp1_nofert)
 run(m_ssp2_nofert)
 run(m_ssp3_nofert)
@@ -432,11 +432,11 @@ update_param!(m_ssp2_nofert_cb, :agcbm, map(x->x/10,m_ssp2_nomig[:impactagricult
 update_param!(m_ssp3_nofert_cb, :agcbm, map(x->x/10,m_ssp2_nomig[:impactagriculture,:agcbm]))
 update_param!(m_ssp4_nofert_cb, :agcbm, map(x->x/10,m_ssp2_nomig[:impactagriculture,:agcbm]))
 update_param!(m_ssp5_nofert_cb, :agcbm, map(x->x/10,m_ssp2_nomig[:impactagriculture,:agcbm]))
-update_param!(m_ssp1_nofert_cb, :consleak, 2.5)
-update_param!(m_ssp2_nofert_cb, :consleak, 2.5)
-update_param!(m_ssp3_nofert_cb, :consleak, 2.5)
-update_param!(m_ssp4_nofert_cb, :consleak, 2.5)
-update_param!(m_ssp5_nofert_cb, :consleak, 2.5)
+update_param!(m_ssp1_nofert_cb, :socioeconomic, :consleak, 2.5)
+update_param!(m_ssp2_nofert_cb, :socioeconomic, :consleak, 2.5)
+update_param!(m_ssp3_nofert_cb, :socioeconomic, :consleak, 2.5)
+update_param!(m_ssp4_nofert_cb, :socioeconomic, :consleak, 2.5)
+update_param!(m_ssp5_nofert_cb, :socioeconomic, :consleak, 2.5)
 update_param!(m_ssp1_nofert_cb, :policy, param_border[:policy_zero])
 update_param!(m_ssp2_nofert_cb, :policy, param_border[:policy_zero])
 update_param!(m_ssp3_nofert_cb, :policy, param_border[:policy_zero])
@@ -459,11 +459,11 @@ update_param!(m_ssp2_nofert_ob, :agcbm, map(x->x/10,m_ssp2_nomig[:impactagricult
 update_param!(m_ssp3_nofert_ob, :agcbm, map(x->x/10,m_ssp2_nomig[:impactagriculture,:agcbm]))
 update_param!(m_ssp4_nofert_ob, :agcbm, map(x->x/10,m_ssp2_nomig[:impactagriculture,:agcbm]))
 update_param!(m_ssp5_nofert_ob, :agcbm, map(x->x/10,m_ssp2_nomig[:impactagriculture,:agcbm]))
-update_param!(m_ssp1_nofert_ob, :consleak, 2.5)
-update_param!(m_ssp2_nofert_ob, :consleak, 2.5)
-update_param!(m_ssp3_nofert_ob, :consleak, 2.5)
-update_param!(m_ssp4_nofert_ob, :consleak, 2.5)
-update_param!(m_ssp5_nofert_ob, :consleak, 2.5)
+update_param!(m_ssp1_nofert_ob, :socioeconomic, :consleak, 2.5)
+update_param!(m_ssp2_nofert_ob, :socioeconomic, :consleak, 2.5)
+update_param!(m_ssp3_nofert_ob, :socioeconomic, :consleak, 2.5)
+update_param!(m_ssp4_nofert_ob, :socioeconomic, :consleak, 2.5)
+update_param!(m_ssp5_nofert_ob, :socioeconomic, :consleak, 2.5)
 update_param!(m_ssp1_nofert_ob, :policy, param_border[:policy_2])
 update_param!(m_ssp2_nofert_ob, :policy, param_border[:policy_2])
 update_param!(m_ssp3_nofert_ob, :policy, param_border[:policy_2])
@@ -486,11 +486,11 @@ update_param!(m_ssp2_nofert_2w, :agcbm, map(x->x/10,m_ssp2_nomig[:impactagricult
 update_param!(m_ssp3_nofert_2w, :agcbm, map(x->x/10,m_ssp2_nomig[:impactagriculture,:agcbm]))
 update_param!(m_ssp4_nofert_2w, :agcbm, map(x->x/10,m_ssp2_nomig[:impactagriculture,:agcbm]))
 update_param!(m_ssp5_nofert_2w, :agcbm, map(x->x/10,m_ssp2_nomig[:impactagriculture,:agcbm]))
-update_param!(m_ssp1_nofert_2w, :consleak, 2.5)
-update_param!(m_ssp2_nofert_2w, :consleak, 2.5)
-update_param!(m_ssp3_nofert_2w, :consleak, 2.5)
-update_param!(m_ssp4_nofert_2w, :consleak, 2.5)
-update_param!(m_ssp5_nofert_2w, :consleak, 2.5)
+update_param!(m_ssp1_nofert_2w, :socioeconomic, :consleak, 2.5)
+update_param!(m_ssp2_nofert_2w, :socioeconomic, :consleak, 2.5)
+update_param!(m_ssp3_nofert_2w, :socioeconomic, :consleak, 2.5)
+update_param!(m_ssp4_nofert_2w, :socioeconomic, :consleak, 2.5)
+update_param!(m_ssp5_nofert_2w, :socioeconomic, :consleak, 2.5)
 update_param!(m_ssp1_nofert_2w, :policy, param_border[:policy_half])
 update_param!(m_ssp2_nofert_2w, :policy, param_border[:policy_half])
 update_param!(m_ssp3_nofert_2w, :policy, param_border[:policy_half])
@@ -543,6 +543,83 @@ move_nofert_bordersnorthsouth = vcat(
     collect(Iterators.flatten(m_ssp5_nofert_2w[:migration,:move][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:,:]))
 )
 move_nofert[:,:move_nofert_bordersnorthsouth] = move_nofert_bordersnorthsouth
+
+damages_nofert = DataFrame(
+    year = repeat(years, outer = length(ssps)*length(regions)),
+    scen = repeat(ssps,inner = length(regions)*length(years)),
+    fundregion = repeat(regions, outer = length(ssps), inner=length(years)),
+)
+dam_nofert_migFUND = vcat(
+    collect(Iterators.flatten(m_ssp1_nofert[:impactaggregation,:loss][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp2_nofert[:impactaggregation,:loss][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp3_nofert[:impactaggregation,:loss][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp4_nofert[:impactaggregation,:loss][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp5_nofert[:impactaggregation,:loss][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:]))
+)
+damages_nofert[:,:damages_nofert_migFUND] = dam_nofert_migFUND
+dam_nofert_migFUND_cb = vcat(
+    collect(Iterators.flatten(m_ssp1_nofert_cb[:impactaggregation,:loss][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp2_nofert_cb[:impactaggregation,:loss][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp3_nofert_cb[:impactaggregation,:loss][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp4_nofert_cb[:impactaggregation,:loss][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp5_nofert_cb[:impactaggregation,:loss][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:]))
+)
+damages_nofert[:,:damages_nofert_migFUND_cb] = dam_nofert_migFUND_cb
+dam_nofert_migFUND_ob = vcat(
+    collect(Iterators.flatten(m_ssp1_nofert_ob[:impactaggregation,:loss][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp2_nofert_ob[:impactaggregation,:loss][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp3_nofert_ob[:impactaggregation,:loss][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp4_nofert_ob[:impactaggregation,:loss][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp5_nofert_ob[:impactaggregation,:loss][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:]))
+)
+damages_nofert[:,:damages_nofert_migFUND_ob] = dam_nofert_migFUND_ob
+dam_nofert_migFUND_2w = vcat(
+    collect(Iterators.flatten(m_ssp1_nofert_2w[:impactaggregation,:loss][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp2_nofert_2w[:impactaggregation,:loss][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp3_nofert_2w[:impactaggregation,:loss][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp4_nofert_2w[:impactaggregation,:loss][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp5_nofert_2w[:impactaggregation,:loss][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:]))
+)
+damages_nofert[:,:damages_nofert_migFUND_2w] = dam_nofert_migFUND_2w
+gdp_nofert_migFUND = vcat(
+    collect(Iterators.flatten(m_ssp1_nofert[:socioeconomic,:income][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp2_nofert[:socioeconomic,:income][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp3_nofert[:socioeconomic,:income][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp4_nofert[:socioeconomic,:income][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp5_nofert[:socioeconomic,:income][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:]))
+)
+damages_nofert[:,:gdp_nofert_migFUND] = gdp_nofert_migFUND
+gdp_nofert_migFUND_cb = vcat(
+    collect(Iterators.flatten(m_ssp1_nofert_cb[:socioeconomic,:income][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp2_nofert_cb[:socioeconomic,:income][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp3_nofert_cb[:socioeconomic,:income][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp4_nofert_cb[:socioeconomic,:income][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp5_nofert_cb[:socioeconomic,:income][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:]))
+)
+damages_nofert[:,:gdp_nofert_migFUND_cb] = gdp_nofert_migFUND_cb
+gdp_nofert_migFUND_ob = vcat(
+    collect(Iterators.flatten(m_ssp1_nofert_ob[:socioeconomic,:income][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp2_nofert_ob[:socioeconomic,:income][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp3_nofert_ob[:socioeconomic,:income][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp4_nofert_ob[:socioeconomic,:income][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp5_nofert_ob[:socioeconomic,:income][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:]))
+)
+damages_nofert[:,:gdp_nofert_migFUND_ob] = gdp_nofert_migFUND_ob
+gdp_nofert_migFUND_2w = vcat(
+    collect(Iterators.flatten(m_ssp1_nofert_2w[:socioeconomic,:income][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp2_nofert_2w[:socioeconomic,:income][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp3_nofert_2w[:socioeconomic,:income][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp4_nofert_2w[:socioeconomic,:income][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp5_nofert_2w[:socioeconomic,:income][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:]))
+)
+damages_nofert[:,:gdp_nofert_migFUND_2w] = gdp_nofert_migFUND_2w
+
+damages_nofert[:,:damgdp_nofert_migFUND] = damages_nofert[:,:damages_nofert_migFUND] ./ (damages_nofert[:,:gdp_nofert_migFUND] .* 10^9)
+damages_nofert[:,:damgdp_nofert_migFUND_cb] = damages_nofert[:,:damages_nofert_migFUND_cb] ./ (damages_nofert[:,:gdp_nofert_migFUND_cb] .* 10^9)
+damages_nofert[:,:damgdp_nofert_migFUND_ob] = damages_nofert[:,:damages_nofert_migFUND_ob] ./ (damages_nofert[:,:gdp_nofert_migFUND_ob] .* 10^9)
+damages_nofert[:,:damgdp_nofert_migFUND_2w] = damages_nofert[:,:damages_nofert_migFUND_2w] ./ (damages_nofert[:,:gdp_nofert_migFUND_2w] .* 10^9)
+rename!(damages_nofert, :damages_nofert_migFUND => :dam_nofert_currentborders, :damages_nofert_migFUND_cb => :dam_nofert_closedborders, :damages_nofert_migFUND_ob => :dam_nofert_moreopen, :damages_nofert_migFUND_2w => :dam_nofert_bordersnorthsouth)
+rename!(damages_nofert, :damgdp_nofert_migFUND => :damgdp_nofert_currentborders, :damgdp_nofert_migFUND_cb => :damgdp_nofert_closedborders, :damgdp_nofert_migFUND_ob => :damgdp_nofert_moreopen, :damgdp_nofert_migFUND_2w => :damgdp_nofert_bordersnorthsouth)
 
 exposed_nofert = innerjoin(move_nofert, rename(rename(
     move_nofert, 
@@ -611,5 +688,5 @@ exposed_nofert_all |> @vlplot(
     color={"btype:o",scale={scheme=:dark2},legend={title=string("Migrant outflows"), titleFontSize=24, titleLimit=240, symbolSize=100, labelFontSize=24, labelLimit=260, offset=10}},
     shape="btype:o",
     resolve = {scale={size=:independent}}
-) |> save(joinpath(@__DIR__, "../results/damages/", string("FigS13.png")))
+) |> save(joinpath(@__DIR__, "../results/damages/", string("FigS13_update.png")))
 
