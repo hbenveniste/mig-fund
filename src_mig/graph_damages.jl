@@ -439,7 +439,6 @@ exposed_all[(exposed_all[:,:btype].!="overallclosed"),:] |> @vlplot(
     shape="btype:o",
     resolve = {scale={size=:independent}}
 ) |> save(joinpath(@__DIR__, "../results/damages/", string("Fig2_update.png")))
-# Also Fig.S17 for runs without remittances
 
 
 ###################################### Plot geographical maps #####################################

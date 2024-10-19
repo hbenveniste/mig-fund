@@ -185,7 +185,6 @@ regions_fullname = DataFrame(
 gdp_all = innerjoin(gdp_all,regions_fullname, on=:fundregion)
 
 # For SSP2, the below figure is Fig.S6 for the main specification
-# Fig.S15 for runs without remittances
 for s in ssps
     gdp_all |> @filter(_.year >= 2015 && _.year <= 2100 && _.scen == s) |> @vlplot(
         mark={:line, strokeWidth = 4}, width=300, height=250, columns=4, wrap={"regionname:o", title=nothing, header={labelFontSize=24}}, 
@@ -343,7 +342,6 @@ regions_fullname = DataFrame(
 netrem_all = innerjoin(netrem_all,regions_fullname, on=:fundregion)
 
 # For SSP2, the below figure is Fig.S5 for the main specification
-# Fig.S11 for the estimation with residuals from gravity model based on the last 5-yr period (2010-2015)
 for s in ssps
     netrem_all |> @filter(_.year >= 2015 && _.year <= 2100 && _.scen == s) |> @vlplot(
         mark={:line, strokeWidth = 4}, width=300, height=250, columns=4, wrap={"regionname:o", title=nothing, header={labelFontSize=24}}, 

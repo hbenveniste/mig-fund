@@ -40,7 +40,7 @@ em_migFUND = vcat(
 em[:,:em_migFUND] = em_migFUND
 
 
-# Compare income in Mig-FUND for different border policy scenarios
+# Compare emissions in Mig-FUND for different border policy scenarios
 # Closed borders between regions
 param_border = MimiFUND.load_default_parameters(joinpath(@__DIR__,"../data_borderpolicy"))
 m_ssp1_nomig_cb = getmigrationmodel(scen="SSP1",migyesno="nomig")
@@ -137,7 +137,6 @@ em_world_stack |> @filter(_.year >= 2015 && _.year <= 2100)  |> @vlplot()+@vlplo
     color = {"scen:n", scale={scheme=:category10}, legend=nothing},
     detail = "worldem_type:o"
 ) |> save(joinpath(@__DIR__, "../results/emissions/", "Fig3a_update.png"))
-# Also Fig.S16a for runs without remittances
 
 
 ###################################### Plot geographical maps #####################################

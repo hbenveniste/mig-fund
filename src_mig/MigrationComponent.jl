@@ -35,6 +35,7 @@ using Mimi
     ageshare      = Parameter(index=[agegroups])
     agegroupinit  = Parameter(index=[regions,regions,agegroups])
 
+    runwithoutrem = Parameter{Bool}(default = false)
     beta0         = Parameter(default = -19.251)       
     beta1         = Parameter(default = 0.689)
     beta2         = Parameter(default = 0.686)
@@ -221,7 +222,7 @@ using Mimi
             end
 
             for r in d.regions
-                v.remittances[t, r] = v.receive[t, r] - v.send[t, r]
+                v.remittances[t, r] = !p.runwithoutrem ? v.receive[t, r] - v.send[t, r] : 0.0
             end
         end
     end

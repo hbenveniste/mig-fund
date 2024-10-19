@@ -43,7 +43,7 @@ end
 gravval_endo[!,:diff_flowmig] = gravval_endo[!,:flowmig] .- gravval_endo[!,:flowmig_grav]
 
 # Transpose to FUND region * region level. 
-iso3c_fundregion = CSV.read("../input_data/iso3c_fundregion.csv", DataFrame)
+iso3c_fundregion = CSV.read(joinpath(@__DIR__,"../input_data/iso3c_fundregion.csv"), DataFrame)
 gravval_endo = innerjoin(gravval_endo, rename(iso3c_fundregion, :fundregion => :originregion, :iso3c => :orig), on =:orig)
 gravval_endo = innerjoin(gravval_endo, rename(iso3c_fundregion, :fundregion => :destinationregion, :iso3c => :dest), on =:dest)
 
@@ -58,9 +58,21 @@ rename!(res_endo,:x1 => :residuals)
 regions = ["USA", "CAN", "WEU", "JPK", "ANZ", "EEU", "FSU", "MDE", "CAM", "LAM", "SAS", "SEA", "CHI", "MAF", "SSA", "SIS"]
 regionsdf = DataFrame(originregion = repeat(regions, inner = length(regions)), indexo = repeat(1:16, inner = length(regions)), destinationregion = repeat(regions, outer = length(regions)), indexd = repeat(1:16, outer = length(regions)))
 res_endo = innerjoin(res_endo, regionsdf, on = [:originregion, :destinationregion])
-sort!(res_endo, (:indexo, :indexd))
+sort!(res_endo, [:indexo, :indexd])
 select!(res_endo, Not([:indexo, :indexd]))
 CSV.write(joinpath(@__DIR__,"../data_mig/gravres.csv"), res_endo; writeheader=false)
+
+# Sensitivity analysis: use only period 2010-2015 for projecting residuals in gravity model
+res_endo_sa = rename(gravval_endo_reg[(gravval_endo_reg[:,:year].==2010),[:originregion,:destinationregion,:diff_flowmig_reg_btw]],:diff_flowmig_reg_btw=>:residuals)
+push!(res_endo_sa,["CAN","CAN",0.0])
+push!(res_endo_sa,["USA","USA",0.0])
+misscorr = antijoin(regionsdf[:,[:originregion,:destinationregion]],res_endo_sa,on=[:originregion,:destinationregion])         # dealing with missing corridors for 2010: use values for 2005 instead
+misscorrval = leftjoin(misscorr, rename(gravval_endo_reg[(gravval_endo_reg[:,:year].==2005),[:originregion,:destinationregion,:diff_flowmig_reg_btw]],:diff_flowmig_reg_btw=>:residuals), on=[:originregion,:destinationregion])
+res_endo_sa = vcat(res_endo_sa,misscorrval)
+res_endo_sa = innerjoin(res_endo_sa, regionsdf, on = [:originregion, :destinationregion])
+sort!(res_endo_sa, [:indexo, :indexd])
+select!(res_endo_sa, Not([:indexo, :indexd]))
+CSV.write(joinpath(@__DIR__,"../data_mig/gravres_1p.csv"), res_endo_sa; writeheader=false)
 
 # Plot: distribution of residuals across corridors, for all 5 periods
 regions_fullname = DataFrame(

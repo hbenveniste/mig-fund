@@ -137,4 +137,3 @@ temp_all |> @filter(_.year <= 2100) |> @vlplot(
     color = {"scen:n", scale={scheme=:category10}, legend={title="Climate scenario", titleFontSize=20, titleLimit=220, symbolSize=60, labelFontSize=18, labelLimit=280}},
     detail = "border:o"
 ) |> save(joinpath(@__DIR__, "../results/temperature/", "Fig3b_update.png"))
-# Also Fig.S16b for runs without remittances
