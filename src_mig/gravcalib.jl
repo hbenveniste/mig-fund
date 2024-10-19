@@ -1,4 +1,4 @@
-using CSV, DataFrames, DelimitedFiles, FileIO, FilePaths
+using CSV, DataFrames, DelimitedFiles, FileIO, FilePaths, XLSX
 using FixedEffectModels, RegressionTables
 using GLM
 using Query
@@ -6,7 +6,7 @@ using Distances
 
 
 ########################## Prepare migration flows data from Abel and Cohen (2019) ########################################
-migflow_allstockdemo = CSV.read(joinpath(@__DIR__, "../../Documents/YSSP_IIASA/data/migflow_abel/gf_imr.csv"), DataFrame) # Use Abel (2018)
+migflow_allstockdemo = CSV.read("../../Abel_data/gf_imr.csv", DataFrame) # Use Abel (2018)
 migflow_alldata = CSV.read(joinpath(@__DIR__, "../input_data/ac19.csv"), DataFrame)          # Use Abel and Cohen (2019)
 
 # From Abel's paper, we choose demographic data from the UN's WPP2015, and migrant stock data from the World Bank for 1960-1990 and the UN for 1990-2015.
@@ -30,7 +30,10 @@ end
 
 ########################## Prepare gdp data from the World Bank's WDI as available at the IIASA SSP database #####################
 # Unit: billion US$ 2005 / year PPP
-gdp_unstacked = load(joinpath(@__DIR__, "../input_data/gdphist.xlsx"), "data!A2:Q184") |> DataFrame
+gdp_unstacked = XLSX.readdata(joinpath(@__DIR__, "../input_data/gdphist.xlsx"), "data!A2:Q184")
+gdp_unstacked = DataFrame(gdp_unstacked, :auto)
+rename!(gdp_unstacked, Symbol.(Vector(gdp_unstacked[1,:])))
+deleteat!(gdp_unstacked,1)
 select!(gdp_unstacked, Not([:Model, Symbol("Scenario (History)"), :Variable, :Unit]))
 gdp = stack(gdp_unstacked, 2:size(gdp_unstacked, 2))
 rename!(gdp, :variable => :year0, :value => :gdp)
@@ -42,16 +45,19 @@ dist=CSV.read(joinpath(@__DIR__, "../input_data/distances.csv"), DataFrame)
 ########################################### Prepare remittance data based on World Bank data ##############################
 rho = CSV.read(joinpath(@__DIR__, "../input_data/rho.csv"), DataFrame)
 phi = CSV.read(joinpath(@__DIR__,"../input_data/phi.csv"), DataFrame)
-remittances = join(rho, phi, on = [:origin, :destination], kind = :left)
+remittances = leftjoin(rho, phi, on = [:origin, :destination])
 # For corridors with no cost data we assume that the cost of sending remittances is the mean of all available corridors
-for i in 1:size(remittances,1)
+for i in eachindex(remittances[:,1])
     if ismissing(remittances[i,:phi])
         remittances[i,:phi] = (remittances[i,:origin] == remittances[i,:destination] ? 0.0 : mean(phi[!,:phi]))
     end
 end
 
 ############################################ Prepare land surface data from WDI (World Bank) #######################
-land = load(joinpath(@__DIR__,"../input_data/land_area.xlsx"), "Data!A1:E218") |> DataFrame
+land = XLSX.readdata(joinpath(@__DIR__,"../input_data/land_area.xlsx"), "Data!A1:E218") 
+land = DataFrame(land, :auto)
+rename!(land, Symbol.(Vector(land[1,:])))
+deleteat!(land,1)
 rename!(land, Symbol("Country Code") => :country, Symbol("2017 [YR2017]") => :area)
 select!(land, [:country, :area])
 
@@ -69,64 +75,64 @@ damcalib = CSV.read(joinpath(@__DIR__, "../input_data/damcalib.csv"), DataFrame;
 
 ############################################# Join the datasets #########################################
 # Joining the datasets
-data = join(migflow, dist, on = [:orig, :dest])
+data = innerjoin(migflow, dist, on = [:orig, :dest])
 select!(data, Not([:stock, :demo, :sex]))
 data[!,:flow] = float(data[!,:flow])
 rename!(data, :flow => :flow_Abel)
 # Or for Raftery's data
-data_ar = join(migflow_ar, dist, on = [:orig, :dest])
+data_ar = innerjoin(migflow_ar, dist, on = [:orig, :dest])
 rename!(data_ar, :da_pb_closed => :flow_AzoseRaftery)
 
 rename!(pop, :LocID => :orig_code, :Time => :year0)
-data = join(data, pop, on = [:year0, :orig_code])
+data = innerjoin(data, pop, on = [:year0, :orig_code])
 rename!(data, :Location => :orig_name, :PopTotal => :pop_orig)
 rename!(pop, :orig_code => :dest_code)
-data = join(data, pop, on = [:year0, :dest_code])
+data = innerjoin(data, pop, on = [:year0, :dest_code])
 rename!(data, :Location => :dest_name, :PopTotal => :pop_dest)
 # Or for Raftery's data
 iso3c_isonum = CSV.read(joinpath(@__DIR__, "../input_data/iso3c_isonum.csv"), DataFrame)
 rename!(pop, :dest_code => :isonum)
-pop = join(pop, iso3c_isonum, on = :isonum)
+pop = innerjoin(pop, iso3c_isonum, on = :isonum)
 rename!(pop, :iso3c => :orig, :PopTotal => :pop_orig)
-data_ar = join(data_ar, pop[:,[:year0, :pop_orig, :orig]], on = [:year0, :orig])
+data_ar = innerjoin(data_ar, pop[:,[:year0, :pop_orig, :orig]], on = [:year0, :orig])
 rename!(pop, :orig => :dest, :pop_orig => :pop_dest)
-data_ar = join(data_ar, pop[:,[:year0, :pop_dest, :dest]], on = [:year0, :dest])
+data_ar = innerjoin(data_ar, pop[:,[:year0, :pop_dest, :dest]], on = [:year0, :dest])
 
 rename!(gdp, :Region => :orig)
-data = join(data, gdp, on = [:year0, :orig])
-data_ar = join(data_ar, gdp, on = [:year0, :orig])
+data = innerjoin(data, gdp, on = [:year0, :orig])
+data_ar = innerjoin(data_ar, gdp, on = [:year0, :orig])
 rename!(data, :gdp => :gdp_orig)
 rename!(data_ar, :gdp => :gdp_orig)
 rename!(gdp, :orig => :dest)
-data = join(data, gdp, on = [:year0, :dest])
-data_ar = join(data_ar, gdp, on = [:year0, :dest])
+data = innerjoin(data, gdp, on = [:year0, :dest])
+data_ar = innerjoin(data_ar, gdp, on = [:year0, :dest])
 rename!(data, :gdp => :gdp_dest)
 rename!(data_ar, :gdp => :gdp_dest)
 
 rename!(remittances, :origin => :orig, :destination => :dest, :rho => :remshare, :phi => :remcost)
-data = join(data, remittances, on = [:orig,:dest])
-data_ar = join(data_ar, remittances, on =[:orig, :dest])
+data = innerjoin(data, remittances, on = [:orig,:dest])
+data_ar = innerjoin(data_ar, remittances, on =[:orig, :dest])
 
 rename!(land, :country => :orig, :area => :area_orig)
-data = join(data, land, on = :orig)
-data_ar = join(data_ar, land, on = :orig)
+data = innerjoin(data, land, on = :orig)
+data_ar = innerjoin(data_ar, land, on = :orig)
 rename!(land, :orig => :dest, :area_orig => :area_dest)
-data = join(data, land, on = :dest)
-data_ar = join(data_ar, land, on = :dest)
+data = innerjoin(data, land, on = :dest)
+data_ar = innerjoin(data_ar, land, on = :dest)
 
-data = join(data, comol, on = [:orig,:dest])
-data_ar = join(data_ar, comol, on = [:orig,:dest])
+data = innerjoin(data, comol, on = [:orig,:dest])
+data_ar = innerjoin(data_ar, comol, on = [:orig,:dest])
 
 # we attribute regional exposure (damages/GDP) levels to all countries in each region
 iso3c_fundregion = CSV.read("../input_data/iso3c_fundregion.csv", DataFrame)
-data = join(data, rename(iso3c_fundregion, :fundregion => :originregion, :iso3c => :orig), on =:orig)
-data = join(data, rename(iso3c_fundregion, :fundregion => :destinationregion, :iso3c => :dest), on =:dest)
-data_ar = join(data_ar, rename(iso3c_fundregion, :fundregion => :originregion, :iso3c => :orig), on =:orig)
-data_ar = join(data_ar, rename(iso3c_fundregion, :fundregion => :destinationregion, :iso3c => :dest), on =:dest)
-data = join(data, rename(damcalib, :Column1=>:year0, :Column2=>:originregion,:Column3=>:expo_orig),on=[:year0,:originregion])
-data = join(data, rename(damcalib, :Column1=>:year0, :Column2=>:destinationregion,:Column3=>:expo_dest),on=[:year0,:destinationregion])
-data_ar = join(data_ar, rename(damcalib, :Column1=>:year0, :Column2=>:originregion,:Column3=>:expo_orig),on=[:year0,:originregion])
-data_ar = join(data_ar, rename(damcalib, :Column1=>:year0, :Column2=>:destinationregion,:Column3=>:expo_dest),on=[:year0,:destinationregion])
+data = innerjoin(data, rename(iso3c_fundregion, :fundregion => :originregion, :iso3c => :orig), on =:orig)
+data = innerjoin(data, rename(iso3c_fundregion, :fundregion => :destinationregion, :iso3c => :dest), on =:dest)
+data_ar = innerjoin(data_ar, rename(iso3c_fundregion, :fundregion => :originregion, :iso3c => :orig), on =:orig)
+data_ar = innerjoin(data_ar, rename(iso3c_fundregion, :fundregion => :destinationregion, :iso3c => :dest), on =:dest)
+data = innerjoin(data, rename(damcalib, :Column1=>:year0, :Column2=>:originregion,:Column3=>:expo_orig),on=[:year0,:originregion])
+data = innerjoin(data, rename(damcalib, :Column1=>:year0, :Column2=>:destinationregion,:Column3=>:expo_dest),on=[:year0,:destinationregion])
+data_ar = innerjoin(data_ar, rename(damcalib, :Column1=>:year0, :Column2=>:originregion,:Column3=>:expo_orig),on=[:year0,:originregion])
+data_ar = innerjoin(data_ar, rename(damcalib, :Column1=>:year0, :Column2=>:destinationregion,:Column3=>:expo_dest),on=[:year0,:destinationregion])
 
 # Making units consistent 
 data[!,:flow_Abel] ./= data[!,:interval]               # flows are for a multiple-year period. we compute annual migrant flows as constant over said period
@@ -150,23 +156,23 @@ data_ar[!,:ypc_dest] = data_ar[!,:gdp_dest] ./ data_ar[!,:pop_dest]
 data_ar[!,:ypc_ratio] = data_ar[!,:ypc_dest] ./ data_ar[!,:ypc_orig]
 
 # Creating ypc for other countries
-data_all = by(unique(data[:,[:year0,:orig,:pop_orig,:gdp_orig]]), :year0, d->(pop_all=sum(skipmissing(d.pop_orig)), gdp_all=sum(skipmissing(d.gdp_orig))))
-data = join(data, data_all, on = :year0)
+data_all = combine(groupby(unique(data[:,[:year0,:orig,:pop_orig,:gdp_orig]]), :year0), d->(pop_all=sum(skipmissing(d.pop_orig)), gdp_all=sum(skipmissing(d.gdp_orig))))
+data = innerjoin(data, data_all, on = :year0)
 data[!,:ypc_other] = (data[!,:gdp_all] .- data[!,:gdp_orig] .- data[!,:gdp_dest]) ./ (data[!,:pop_all] .- data[!,:pop_orig] .- data[!,:pop_dest]) 
-data_ar_all = by(unique( data_ar[:,[:year0,:orig,:pop_orig,:gdp_orig]]), :year0, d->(pop_all=sum(skipmissing(d.pop_orig)), gdp_all=sum(skipmissing(d.gdp_orig))))
- data_ar = join( data_ar,  data_ar_all, on = :year0)
+data_ar_all = combine(groupby(unique( data_ar[:,[:year0,:orig,:pop_orig,:gdp_orig]]), :year0), d->(pop_all=sum(skipmissing(d.pop_orig)), gdp_all=sum(skipmissing(d.gdp_orig))))
+ data_ar = innerjoin( data_ar,  data_ar_all, on = :year0)
  data_ar[!,:ypc_other] = ( data_ar[!,:gdp_all] .-  data_ar[!,:gdp_orig] .-  data_ar[!,:gdp_dest]) ./ ( data_ar[!,:pop_all] .-  data_ar[!,:pop_orig] .-  data_ar[!,:pop_dest]) 
 
 # Create ratios of move_od / stay_o variables
-emig = by(data, [:year0,:orig], d->sum(d.flow_Abel))
+emig = combine(groupby(data, [:year0,:orig]), d->sum(d.flow_Abel))
 rename!(emig, :x1 => :emig)
-data = join(data, emig, on=[:year0,:orig])
+data = innerjoin(data, emig, on=[:year0,:orig])
 data[!,:stay_orig] = data[!,:pop_orig] .- data[!,:emig]
 data[!,:mig_ratio] = data[!,:flow_Abel] ./ data[!,:stay_orig]
 data[!,:mig_ratio_tot] = data[!,:flow_Abel] ./ data[!,:pop_orig]
-emig_ar = by(data_ar, [:year0,:orig], d->sum(d.flow_AzoseRaftery))
+emig_ar = combine(groupby(data_ar, [:year0,:orig]), d->sum(d.flow_AzoseRaftery))
 rename!(emig_ar, :x1 => :emig)
-data_ar = join(data_ar, emig_ar, on=[:year0,:orig])
+data_ar = innerjoin(data_ar, emig_ar, on=[:year0,:orig])
 data_ar[!,:stay_orig] = data_ar[!,:pop_orig] .- data_ar[!,:emig]
 data_ar[!,:mig_ratio] = data_ar[!,:flow_AzoseRaftery] ./ data_ar[!,:stay_orig]
 data_ar[!,:mig_ratio_tot] = data_ar[!,:flow_AzoseRaftery] ./ data_ar[!,:pop_orig]
@@ -193,7 +199,7 @@ logdata = DataFrame(
     expo_dest = data[!,:expo_dest]
 )
 for name in [:flow_Abel, :mig_ratio, :mig_ratio_tot, :pop_orig, :pop_dest, :area_orig, :area_dest, :density_orig, :density_dest, :density_ratio, :gdp_orig, :gdp_dest, :ypc_orig, :ypc_dest, :ypc_ratio, :ypc_other, :distance]
-    logdata[!,name] = [log(data[!,name][i]) for i in 1:size(logdata, 1)]
+    logdata[!,name] = [log(data[!,name][i]) for i in eachindex(logdata[:,1])]
 end
 logdata_ar = DataFrame(
     year = data_ar[!,:year0], 
@@ -206,7 +212,7 @@ logdata_ar = DataFrame(
     expo_dest = data_ar[!,:expo_dest]
 )
 for name in [:flow_AzoseRaftery, :mig_ratio, :mig_ratio_tot, :pop_orig, :pop_dest, :area_orig, :area_dest, :density_orig, :density_dest, :density_ratio, :gdp_orig, :gdp_dest, :ypc_orig, :ypc_dest, :ypc_ratio, :ypc_other, :distance]
-    logdata_ar[!,name] = [log(data_ar[!,name][i]) for i in 1:size(logdata_ar, 1)]
+    logdata_ar[!,name] = [log(data_ar[!,name][i]) for i in eachindex(logdata_ar[:,1])]
 end
 
 # Remove rows with distance = 0 or flow = 0
@@ -303,7 +309,7 @@ rranex3 = reg(gravity_ar, @formula(remshare ~ ypc_orig + ypc_ratio + remcost), V
 rranex4 = reg(gravity_ar, @formula(remshare ~ ypc_orig + ypc_ratio + remcost + fe(YearCategorical) + fe(OrigCategorical) + fe(DestCategorical)), Vcov.cluster(:OrigCategorical, :DestCategorical), save=true)
 
 # Regress log(remshare) on log(ypc_orig), log(ypc_dest) (or ypc_ratio) and remcost
-gravity_ar[!,:log_remshare] = [log(gravity_ar[i,:remshare]) for i in 1:size(gravity_ar, 1)]
+gravity_ar[!,:log_remshare] = [log(gravity_ar[i,:remshare]) for i in eachindex(gravity_ar[:,1])]
 
 rranex5 = reg(gravity_ar[(gravity_ar[:,:remshare] .!= 0.0),:], @formula(log_remshare ~ ypc_orig + ypc_dest + remcost), Vcov.cluster(:OrigCategorical, :DestCategorical), save=true)
 rranex6 = reg(gravity_ar[(gravity_ar[:,:remshare] .!= 0.0),:], @formula(log_remshare ~ ypc_orig + ypc_dest + remcost + fe(YearCategorical)), Vcov.cluster(:OrigCategorical, :DestCategorical), save=true)
@@ -316,23 +322,23 @@ regtable(rranex1, rranex2, rranex3, rranex4, rranex5, rranex6, rranex7, rranex8;
 # Reading GDP per capita at country level; data for 2017 from World Bank(WDI), in current USD. 
 ypc_2017 = readdlm("../input_data/ypc2017.csv", ';', comments = true)
 ypc2017 = DataFrame(iso3c = ypc_2017[2:end,1], ypc = ypc_2017[2:end,2])
-for i in 1:size(ypc2017, 1) ; if ypc2017[:ypc][i] == ".." ; ypc2017[:ypc][i] = missing end end      # replacing missing values by missing
+for i in eachindex(ypc2017[:,1]) ; if ypc2017[:ypc][i] == ".." ; ypc2017[:ypc][i] = missing end end      # replacing missing values by missing
 
-data_17 = join(ypc2017, iso3c_isonum, on=:iso3c)
+data_17 = innerjoin(ypc2017, iso3c_isonum, on=:iso3c)
 dropmissing!(data_17)       # remove rows with missing values in ypc
 
-data_17 = join(data_17, rename(pop_allvariants[.&(pop_allvariants[:,:Variant].=="Medium", pop_allvariants[:,:Time].==2017),[:LocID,:PopTotal]], :LocID=>:isonum), on=:isonum)
+data_17 = innerjoin(data_17, rename(pop_allvariants[.&(pop_allvariants[:,:Variant].=="Medium", pop_allvariants[:,:Time].==2017),[:LocID,:PopTotal]], :LocID=>:isonum), on=:isonum)
 data_17[!,:PopTotal] .*= 1000        # pop is in thousands
 
-gravity_17 = join(rename(data_17, :iso3c => :orig, :ypc=>:ypc_orig,:PopTotal=>:pop_orig)[:,Not(:isonum)], remittances, on=:orig)
-gravity_17 = join(rename(data_17,:iso3c=>:dest,:ypc=>:ypc_dest,:PopTotal=>:pop_dest)[:,Not(:isonum)], gravity_17, on=:dest)
+gravity_17 = innerjoin(rename(data_17, :iso3c => :orig, :ypc=>:ypc_orig,:PopTotal=>:pop_orig)[:,Not(:isonum)], remittances, on=:orig)
+gravity_17 = innerjoin(rename(data_17,:iso3c=>:dest,:ypc=>:ypc_dest,:PopTotal=>:pop_dest)[:,Not(:isonum)], gravity_17, on=:dest)
 gravity_17[!,:ypc_ratio] = gravity_17[!,:ypc_dest] ./ gravity_17[!,:ypc_orig]
 
 # log transformation
 for name in [:pop_orig, :pop_dest, :ypc_orig, :ypc_dest, :ypc_ratio]
-    gravity_17[!,name] = [log(gravity_17[i,name]) for i in 1:size(gravity_17, 1)]
+    gravity_17[!,name] = [log(gravity_17[i,name]) for i in eachindex(gravity_17[:,1])]
 end
-gravity_17[!,:log_remshare] = [log(gravity_17[i,:remshare]) for i in 1:size(gravity_17, 1)]
+gravity_17[!,:log_remshare] = [log(gravity_17[i,:remshare]) for i in eachindex(gravity_17[:,1])]
 
 # Create country fixed effects
 gravity_17.OrigCategorical = categorical(gravity_17.orig)
@@ -354,12 +360,12 @@ regtable(r17anex1, r17anex2, r17anex5, r17anex6; renderSettings = latexOutput(),
 # r17anex6 appears to make most sense. 
 gravity_17[!,:residual_ratio] = residuals(r17anex6, gravity_17)
 gravity_17[!,:residual_dest] = residuals(r17anex5, gravity_17)
-gravity_17[!,:exp_residual] = [exp(gravity_17[i,:residual_ratio]) for i in 1:size(gravity_17, 1)]     # need exp(residuals)
+gravity_17[!,:exp_residual] = [exp(gravity_17[i,:residual_ratio]) for i in eachindex(gravity_17[:,1])]     # need exp(residuals)
 
-gravity_endo = join(gravity_ar, gravity_17[:,[:orig,:dest,:residual_ratio]], on=[:orig,:dest])
-gravity_endo_abel = join(gravity, gravity_17[:,[:orig,:dest,:residual_ratio]], on=[:orig,:dest])
-gravity_endo[!,:exp_residual] = [exp(gravity_endo[i,:residual_ratio]) for i in 1:size(gravity_endo, 1)]     # need exp(residuals)
-gravity_endo_abel[!,:exp_residual] = [exp(gravity_endo_abel[i,:residual_ratio]) for i in 1:size(gravity_endo_abel, 1)]     # need exp(residuals)
+gravity_endo = innerjoin(gravity_ar, gravity_17[:,[:orig,:dest,:residual_ratio]], on=[:orig,:dest])
+gravity_endo_abel = innerjoin(gravity, gravity_17[:,[:orig,:dest,:residual_ratio]], on=[:orig,:dest])
+gravity_endo[!,:exp_residual] = [exp(gravity_endo[i,:residual_ratio]) for i in eachindex(gravity_endo[:,1])]     # need exp(residuals)
+gravity_endo_abel[!,:exp_residual] = [exp(gravity_endo_abel[i,:residual_ratio]) for i in eachindex(gravity_endo_abel[:,1])]     # need exp(residuals)
 
 # Estimate the main gravity equation using residuals from remshare regression
 re1 = reg(gravity_endo, @formula(flow_AzoseRaftery ~ pop_orig + pop_dest + ypc_orig + ypc_dest + distance + exp_residual + remcost + comofflang + fe(YearCategorical)), Vcov.cluster(:OrigCategorical, :DestCategorical), save=true)
@@ -603,10 +609,10 @@ regtable(rer1, rer2, rer5, rer6, renpr1, renpr2, renpr5, renpr6; renderSettings 
 
 
 ##################################################### Seventh specification: use continent-level fixed effects #################################
-gravity_endo = join(gravity_endo, rename(iso3c_fundregion, :iso3c => :orig, :fundregion => :originregion), on = :orig)
-gravity_endo = join(gravity_endo, rename(iso3c_fundregion, :iso3c => :dest, :fundregion => :destinationregion), on = :dest)
-gravity_endo_abel = join(gravity_endo_abel, rename(iso3c_fundregion, :iso3c => :orig, :fundregion => :originregion), on = :orig)
-gravity_endo_abel = join(gravity_endo_abel, rename(iso3c_fundregion, :iso3c => :dest, :fundregion => :destinationregion), on = :dest)
+gravity_endo = innerjoin(gravity_endo, rename(iso3c_fundregion, :iso3c => :orig, :fundregion => :originregion), on = :orig)
+gravity_endo = innerjoin(gravity_endo, rename(iso3c_fundregion, :iso3c => :dest, :fundregion => :destinationregion), on = :dest)
+gravity_endo_abel = innerjoin(gravity_endo_abel, rename(iso3c_fundregion, :iso3c => :orig, :fundregion => :originregion), on = :orig)
+gravity_endo_abel = innerjoin(gravity_endo_abel, rename(iso3c_fundregion, :iso3c => :dest, :fundregion => :destinationregion), on = :dest)
 
 # Add continental fixed effects
 gravity_endo.OriginregionCategorical = categorical(gravity_endo.originregion)

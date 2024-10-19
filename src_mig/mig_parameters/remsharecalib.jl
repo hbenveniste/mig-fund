@@ -7,11 +7,10 @@ countriesr = remflow_matrix[1:214,1]
 remflow = stack(remflow_matrix, 2:215)
 select!(remflow, Not(:WORLD))
 rename!(remflow, Symbol("receiving (across) / sending (down) ") => :sending, :variable => :receiving, :value => :flow)
-permutecols!(remflow, [3,1,2])
 sort!(remflow, :sending)
 indworld = findall(remflow[!,:sending] .== "WORLD")
-deleterows!(remflow, indworld)
-indmissing = findall([typeof(remflow[!,:flow][i]) != Float64 for i in 1:size(remflow, 1)])
+deleteat!(remflow, indworld)
+indmissing = findall([typeof(remflow[!,:flow][i]) != Float64 for i in eachindex(remflow[:,1])])
 for i in indmissing ; remflow[!,:flow][i] = 0.0 end
 remflow[!,:flow] = map(x -> float(x), remflow[!,:flow])
 remflow[!,:receiving] = map(x -> string(x), remflow[!,:receiving])
@@ -22,11 +21,10 @@ countriesm = migstock_matrix[1:214,1]
 migstock = stack(migstock_matrix, 2:215)
 select!(migstock, Not([Symbol("Other North"), Symbol("Other South"), :World]))
 rename!(migstock, :x1 => :origin, :variable => :destination, :value => :stock)
-permutecols!(migstock, [3,1,2])
 sort!(migstock, :origin)
 indregion = vcat(findall(migstock[!,:origin] .== "Other North"), findall(migstock[!,:origin] .== "Other South"), findall(migstock[!,:origin] .== "World"))
-deleterows!(migstock, indregion)
-indmissing = findall([typeof(migstock[!,:stock][i]) != Float64 for i in 1:size(migstock, 1)])
+deleteat!(migstock, indregion)
+indmissing = findall([typeof(migstock[!,:stock][i]) != Float64 for i in eachindex(migstock[:,1])])
 for i in indmissing ; migstock[!,:stock][i] = 0.0 end
 migstock[!,:stock] = map(x -> float(x), migstock[!,:stock])
 migstock[!,:destination] = map(x -> string(x), migstock[!,:destination])
@@ -35,26 +33,25 @@ migstock[!,:destination] = map(x -> string(x), migstock[!,:destination])
 ypc2017 = load(joinpath(@__DIR__,"../data/rem_wb/GDPpercap2017.xlsx"), "Data!A1:E218") |> DataFrame
 select!(ypc2017, Not([Symbol("Series Code"), Symbol("Series Name")]))
 rename!(ypc2017, Symbol("Country Name") => :country, Symbol("Country Code") => :country_code, Symbol("2017 [YR2017]") => :ypc)
-for i in 1:size(ypc2017, 1) ; if ypc2017[!,:ypc][i] == ".." ; ypc2017[!,:ypc][i] = missing end end      # replacing missing values by zeros
+for i in eachindex(ypc2017[:,1]) ; if ypc2017[!,:ypc][i] == ".." ; ypc2017[!,:ypc][i] = missing end end      # replacing missing values by zeros
 
 # Joining data
 rename!(remflow, :sending => :destination) ; rename!(remflow, :receiving => :origin)                # remittances sending country = destination country
-rho = join(remflow, migstock, on = [:origin, :destination], kind = :outer)
-permutecols!(rho, [2,1,3,4])
+rho = outerjoin(remflow, migstock, on = [:origin, :destination])
 sort!(rho, :origin)
 rename!(rho, :flow => :remflow, :stock => :migstock)
 
 rename!(ypc2017, :country => :destination, :country_code => :code_dest, :ypc => :ypc_dest)
 indnkorea = findfirst(x -> x == "Korea, Dem. People’s Rep.", ypc2017[!,:destination])
 ypc2017[!,:destination][indnkorea] = "Korea, Dem. Rep."
-rho = join(rho, ypc2017, on = :destination)         # Only Swaziland and Faeroe Islands are missing (no ypc values)
+rho = innerjoin(rho, ypc2017, on = :destination)         # Only Swaziland and Faeroe Islands are missing (no ypc values)
 rename!(ypc2017, :destination => :origin, :code_dest => :code_or, :ypc_dest => :ypc_or)
-rho = join(rho, ypc2017, on = :origin)         # Only Swaziland and Faeroe Islands are missing (no ypc values)
-rho[!,:ypc] = [max(mean([rho[i,:ypc_or],rho[i,:ypc_dest]]), rho[i,:ypc_or]) for i in 1:size(rho,1)]
+rho = innerjoin(rho, ypc2017, on = :origin)         # Only Swaziland and Faeroe Islands are missing (no ypc values)
+rho[!,:ypc] = [max(mean([rho[i,:ypc_or],rho[i,:ypc_dest]]), rho[i,:ypc_or]) for i in eachindex(rho[:,1])]
 
 # Calculating rho using rho * ypc * migstock = remflow
 rho[!,:rho] = rho[!,:remflow] .* 1000000 ./ (rho[!,:migstock] .* rho[!,:ypc])       # Remittances are in million USD 2018
-for i in 1:size(rho, 1)
+for i in eachindex(rho[:,1])
     if ismissing(rho[i,:ypc]) || rho[!,:migstock][i] == 0.0 || rho[!,:ypc][i] == 0.0
         rho[!,:rho][i] = 0.0
     end

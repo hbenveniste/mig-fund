@@ -9,9 +9,9 @@ select!(rpw, Not(vcat(names(rpw)[1], names(rpw)[4:8], names(rpw)[10:22], names(r
 rename!(rpw, Symbol("cc1 total cost %") => :cc1, Symbol("cc2 total cost %") => :cc2, :source_code => :source, :destination_code => :destination)
 rpw[!,:period] = map(x -> parse(Int, SubString(x,1:4)), rpw[!,:period])
 indnot2017 = findall(rpw[!,:period] .!= 2017)
-deleterows!(rpw, indnot2017)
-rpw[!,:meancost] = [(typeof(rpw[i,:cc1]) == Float64 && rpw[i,:cc1]>=0) ? ((typeof(rpw[i,:cc2]) == Float64 && rpw[i,:cc2]>=0) ? mean([rpw[!,:cc1][i], rpw[!,:cc2][i]]) : max(0,rpw[i,:cc1])) : max(0,rpw[i,:cc2]) for i in 1:size(rpw, 1)]
-phi = by(rpw, [:source, :destination], df -> mean(df[!,:meancost]) ./ 100)        # We average over surveys and firms per corridor.
+deleteat!(rpw, indnot2017)
+rpw[!,:meancost] = [(typeof(rpw[i,:cc1]) == Float64 && rpw[i,:cc1]>=0) ? ((typeof(rpw[i,:cc2]) == Float64 && rpw[i,:cc2]>=0) ? mean([rpw[!,:cc1][i], rpw[!,:cc2][i]]) : max(0,rpw[i,:cc1])) : max(0,rpw[i,:cc2]) for i in eachindex(rpw[:,1])]
+phi = combine(groupby(rpw, [:source, :destination]), df -> mean(df[!,:meancost]) ./ 100)        # We average over surveys and firms per corridor.
 rename!(phi, :x1 => :remcost)
 
 # Reading remittances flows at country * country level; data for 2017 from World Bank.
@@ -25,15 +25,15 @@ for o in (header):(length(countries) + 1)
     append!(flow, oflow)
 end
 remflow[:remittanceflows] = flow
-indmissing = findall([typeof(remflow[!,:remittanceflows][i]) != Float64 for i in 1:size(remflow, 1)])
+indmissing = findall([typeof(remflow[!,:remittanceflows][i]) != Float64 for i in eachindex(remflow[:,1])])
 for i in indmissing
     remflow[:remittanceflows][i] = 0.0
 end    
 
 # Matching country codes.
-country_iso3c = CSV.read("../input_data/country_iso3c.csv")
-matching = join(DataFrame(country = countries), country_iso3c, on = :country, kind = :left)
-misspelled = findall([ismissing(matching[i,:iso3c]) for i in 1:size(matching, 1)])
+country_iso3c = CSV.read("../input_data/country_iso3c.csv", DataFrame)
+matching = leftjoin(DataFrame(country = countries), country_iso3c, on = :country)
+misspelled = findall([ismissing(matching[i,:iso3c]) for i in eachindex(matching[:,1])])
 for i in misspelled
     ind = findfirst([occursin(j, split(matching[i,:country], ",")[1]) for j in country_iso3c[!,:country]] .== true)
     if typeof(ind) == Int64 ; matching[!,:iso3c][i] = country_iso3c[:iso3c][ind] end
@@ -57,20 +57,20 @@ matching[:iso3c][39] = "CHI"
 matching[:iso3c][103] = "XKX"
 
 rename!(matching, :country => :sourcecountry)
-remflow = join(remflow, matching, on = :sourcecountry, kind = :left)
+remflow = leftjoin(remflow, matching, on = :sourcecountry)
 rename!(remflow, :iso3c => :source)
 rename!(matching, :sourcecountry => :destinationcountry)
-remflow = join(remflow, matching, on = :destinationcountry, kind = :left)
+remflow = leftjoin(remflow, matching, on = :destinationcountry)
 rename!(remflow, :iso3c => :destination)
 
 # Joining the data.
-phi = join(phi, remflow, on = [:source, :destination], kind = :left)
+phi = leftjoin(phi, remflow, on = [:source, :destination])
 
 # Transposing to FUND region * region level. We weight corridors by remittances flows.
-iso3c_fundregion = CSV.read("../input_data/iso3c_fundregion.csv")
+iso3c_fundregion = CSV.read("../input_data/iso3c_fundregion.csv", DataFrame)
 phiweight = DataFrame(source = phi[:source], destination = phi[:destination], remittanceflows = phi[:remittanceflows], remcost = phi[:remcost])
 rename!(iso3c_fundregion, :iso3c => :source)
-phiweight = join(phiweight, iso3c_fundregion, on = :source, kind = :left)
+phiweight = leftjoin(phiweight, iso3c_fundregion, on = :source)
 rename!(phiweight, :fundregion => :sourceregion)
 mis3c = Dict("SXM" => "SIS", "MAF" => "SIS", "CHI" => "WEU", "KSV" => "EEU")
 for c in ["SXM", "MAF", "CHI", "KSV"] 
@@ -80,7 +80,7 @@ for c in ["SXM", "MAF", "CHI", "KSV"]
     end
 end
 rename!(iso3c_fundregion, :source => :destination)
-phiweight = join(phiweight, iso3c_fundregion, on = :destination, kind = :left)
+phiweight = leftjoin(phiweight, iso3c_fundregion, on = :destination)
 rename!(phiweight, :fundregion => :destinationregion)
 for c in ["SXM", "MAF", "CHI", "KSV"] 
     indmissing = findall(phiweight[:destination] .== c)
@@ -89,21 +89,20 @@ for c in ["SXM", "MAF", "CHI", "KSV"]
     end
 end
 
-weight = by(phiweight, [:sourceregion, :destinationregion], df -> sum(df[:remittanceflows]))
-phiweight = join(phiweight, weight, on = [:sourceregion, :destinationregion], kind = :left)
+weight = combine(groupby(phiweight, [:sourceregion, :destinationregion]), df -> sum(df[:remittanceflows]))
+phiweight = leftjoin(phiweight, weight, on = [:sourceregion, :destinationregion])
 phiweight[!,:x1] = coalesce.(phiweight[!,:x1], 0)
-phiweight[:w1] = [phiweight[:x1][i] != 0.0 ? phiweight[:remittanceflows][i] / phiweight[:x1][i] : 0.0 for i in 1:size(phiweight, 1)]
-phiweight = by(phiweight, [:sourceregion, :destinationregion], df -> sum(df[:w1] .* df[:remcost]))
+phiweight[:w1] = [phiweight[:x1][i] != 0.0 ? phiweight[:remittanceflows][i] / phiweight[:x1][i] : 0.0 for i in eachindex(phiweight[:,1])]
+phiweight = combine(groupby(phiweight, [:sourceregion, :destinationregion]), df -> sum(df[:w1] .* df[:remcost]))
 rename!(phiweight, :x1 => :phi)
 
 # Sorting the data
 rename!(phiweight, :destinationregion => :originregion, :sourceregion => :destinationregion)        # !!! Source is the sending region, i.e. the migrant destination
 regions = ["USA", "CAN", "WEU", "JPK", "ANZ", "EEU", "FSU", "MDE", "CAM", "LAM", "SAS", "SEA", "CHI", "MAF", "SSA", "SIS"]
 regionsdf = DataFrame(originregion = repeat(regions, inner = length(regions)), indexo = repeat(1:16, inner = length(regions)), destinationregion = repeat(regions, outer = length(regions)), indexd = repeat(1:16, outer = length(regions)))
-phiweight = join(phiweight, regionsdf, on = [:originregion, :destinationregion], kind = :outer)
+phiweight = outerjoin(phiweight, regionsdf, on = [:originregion, :destinationregion])
 sort!(phiweight, (:indexo, :indexd))
 delete!(phiweight, [:indexo, :indexd])
-permutecols!(phiweight, [2,1,3])
 
 # Dealing with missing values. 
 # We attribute to missing corridors the mean of costs for all corridors with the same source region. If all source regions are missing, we attribute the mean of all corridors.

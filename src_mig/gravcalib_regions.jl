@@ -10,29 +10,29 @@ gravity_endo = CSV.read(joinpath(@__DIR__,"../results/gravity/gravity_endo.csv")
 # gravity_endo has data in log. We transform it back.
 data = gravity_endo[:,[:year,:orig,:dest,:flow_AzoseRaftery,:pop_orig,:pop_dest,:ypc_orig,:ypc_dest]]
 for name in [:flow_AzoseRaftery,:pop_orig,:pop_dest,:ypc_orig,:ypc_dest,]
-    data[!,name] = [exp(data[!,name][i]) for i in 1:size(data, 1)]
+    data[!,name] = [exp(data[!,name][i]) for i in eachindex(data[:,1])]
 end
 data[!,:gdp_orig] = data[:,:pop_orig] .* data[:,:ypc_orig]
 data[!,:gdp_dest] = data[:,:pop_dest] .* data[:,:ypc_dest]
 
 # Transpose to FUND region * region level. 
 iso3c_fundregion = CSV.read("../input_data/iso3c_fundregion.csv", DataFrame)
-data = join(data, rename(iso3c_fundregion, :fundregion => :originregion, :iso3c => :orig), on =:orig)
-data = join(data, rename(iso3c_fundregion, :fundregion => :destinationregion, :iso3c => :dest), on =:dest)
+data = innerjoin(data, rename(iso3c_fundregion, :fundregion => :originregion, :iso3c => :orig), on =:orig)
+data = innerjoin(data, rename(iso3c_fundregion, :fundregion => :destinationregion, :iso3c => :dest), on =:dest)
 
-data_reg = by(data, [:year,:originregion,:destinationregion], d->(migflow=sum(d.flow_AzoseRaftery),pop_o=sum(d.pop_orig),pop_d=sum(d.pop_dest),gdp_o=sum(d.gdp_orig),gdp_d=sum(d.gdp_dest)))
+data_reg = combine(groupby(data, [:year,:originregion,:destinationregion]), d->(migflow=sum(d.flow_AzoseRaftery),pop_o=sum(d.pop_orig),pop_d=sum(d.pop_dest),gdp_o=sum(d.gdp_orig),gdp_d=sum(d.gdp_dest)))
 
 remcost = CSV.read(joinpath(@__DIR__,"../data_mig/remcost.csv"), DataFrame;header=false)
-data_reg = join(data_reg, rename(remcost, :Column1=>:originregion,:Column2=>:destinationregion,:Column3=>:remcost),on=[:originregion,:destinationregion])
+data_reg = innerjoin(data_reg, rename(remcost, :Column1=>:originregion,:Column2=>:destinationregion,:Column3=>:remcost),on=[:originregion,:destinationregion])
 
 distance = CSV.read(joinpath(@__DIR__,"../data_mig/distance.csv"), DataFrame;header=false)
-data_reg = join(data_reg, rename(distance, :Column1=>:originregion,:Column2=>:destinationregion,:Column3=>:distance),on=[:originregion,:destinationregion])
+data_reg = innerjoin(data_reg, rename(distance, :Column1=>:originregion,:Column2=>:destinationregion,:Column3=>:distance),on=[:originregion,:destinationregion])
 
 comofflang = CSV.read(joinpath(@__DIR__,"../data_mig/comofflang.csv"), DataFrame;header=false)
-data_reg = join(data_reg, rename(comofflang, :Column1=>:originregion,:Column2=>:destinationregion,:Column3=>:comofflang),on=[:originregion,:destinationregion])
+data_reg = innerjoin(data_reg, rename(comofflang, :Column1=>:originregion,:Column2=>:destinationregion,:Column3=>:comofflang),on=[:originregion,:destinationregion])
 
 rho_fund_est = CSV.read(joinpath(@__DIR__,"../input_data/rho_fund_est.csv"), DataFrame)
-data_reg = join(data_reg, rho_fund_est[:,union(1:2,13)], on=[:originregion,:destinationregion])
+data_reg = innerjoin(data_reg, rho_fund_est[:,union(1:2,13)], on=[:originregion,:destinationregion])
 
 # Creating gdp per capita variables
 data_reg[!,:ypc_o] = data_reg[!,:gdp_o] ./ data_reg[!,:pop_o]
@@ -50,7 +50,7 @@ logdata_reg = DataFrame(
     comofflang = data_reg[!,:comofflang]
 )
 for name in [:migflow, :pop_o, :pop_d, :ypc_o, :ypc_d, :distance]
-    logdata_reg[!,name] = [log(data_reg[!,name][i]) for i in 1:size(logdata_reg, 1)]
+    logdata_reg[!,name] = [log(data_reg[!,name][i]) for i in eachindex(logdata_reg[:,1])]
 end
 
 # Remove rows with distance = 0 or flow = 0

@@ -5,7 +5,7 @@ regions = ["USA", "CAN", "WEU", "JPK", "ANZ", "EEU", "FSU", "MDE", "CAM", "LAM",
 
 
 # Calculating population weights based on country level population data in 2015 from the UN World Population Prospects 2019
-pop_allvariants = CSV.read(joinpath(@__DIR__, "../input_data/WPP2019.csv"))
+pop_allvariants = CSV.read(joinpath(@__DIR__, "../input_data/WPP2019.csv"), DataFrame)
 # We use the Medium variant, the most commonly used. Unit: thousands
 pop2015 = @from i in pop_allvariants begin
     @where i.Variant == "Medium" && i.Time == 2015
@@ -21,10 +21,10 @@ pop2015 = push!(pop2015, [832, "Jersey", pop2015[channelsind,:PopTotal]*0.6])
 pop2015 = pop2015[[1:(channelsind-1); (channelsind+1:end)],:]
 rename!(pop2015, :LocID => :isonum, :Location => :country, :PopTotal => :pop)
 
-isonum_fundregion = CSV.read("../input_data/isonum_fundregion.csv")
-pop2015weight = join(pop2015, isonum_fundregion, on = :isonum, kind = :inner)
-weight = by(pop2015weight, :fundregion, df -> sum(df[!,:pop]))
-pop2015weight[!,:weight] = [pop2015weight[i,:pop] / weight[!,:x1][findfirst(weight[!,:fundregion] .== pop2015weight[i,:fundregion])] for i in 1:size(pop2015weight,1)]
+isonum_fundregion = CSV.read("../input_data/isonum_fundregion.csv", DataFrame)
+pop2015weight = innerjoin(pop2015, isonum_fundregion, on = :isonum)
+weight = combine(groupby(pop2015weight, :fundregion), df -> sum(df[!,:pop]))
+pop2015weight[!,:weight] = [pop2015weight[i,:pop] / weight[!,:x1][findfirst(weight[!,:fundregion] .== pop2015weight[i,:fundregion])] for i in eachindex(pop2015weight[:,1])]
 
 
 # Calculating life expectancy scenarios at region level
@@ -32,10 +32,10 @@ pop2015weight[!,:weight] = [pop2015weight[i,:pop] / weight[!,:x1][findfirst(weig
 # We provide all SSP but have used SSP2 so far.  
 # We assume constant life expectancy after 2100
 
-lifeexp = CSV.read(joinpath(@__DIR__,"../input_data/lifeexp.csv");header=9)
+lifeexp = CSV.read(joinpath(@__DIR__,"../input_data/lifeexp.csv"), DataFrame; header=9)
 select!(lifeexp, Not(:Area))
 lifeexp[!,:Period] = map( x -> parse(Int, SubString(x, 1:4)), lifeexp[!,:Period])
-lifeexp = by(lifeexp, [:Scenario, :Period, :ISOCode], d -> mean(d.Years))               # Compute life expectancy for overall population as average between male and female
+lifeexp = combine(groupby(lifeexp, [:Scenario, :Period, :ISOCode]), d -> mean(d.Years))               # Compute life expectancy for overall population as average between male and female
 rename!(lifeexp, :x1 => :lifeexp)
 
 # The Channels Islands do not have a proper ISO code, instead Jersey (832, JEY) and Guernsey (831, GGY) do. 
@@ -44,8 +44,8 @@ for i in channelsind
     push!(lifeexp, [lifeexp[!,:Scenario][i], lifeexp[!,:Period][i], 831, lifeexp[!,:lifeexp][i]])
     push!(lifeexp, [lifeexp[!,:Scenario][i], lifeexp[!,:Period][i], 832, lifeexp[!,:lifeexp][i]])
 end
-deleterows!(lifeexp, channelsind)
-deleterows!(lifeexp, findall(lifeexp[!,:ISOCode] .== 900))        # Delete data for world
+deleteat!(lifeexp, channelsind)
+deleteat!(lifeexp, findall(lifeexp[!,:ISOCode] .== 900))        # Delete data for world
 sort!(lifeexp, [:Scenario, :Period, :ISOCode])
 
 # I only have data for SSP1,2,3, but based on mortality assumptions mentioned in KC and Lutz (2017), I assume that SSP4 ~ SSP2, and SSP5 ~ SSP1
@@ -60,8 +60,8 @@ rename!(lifeexp, :ISOCode => :isonum, :Scenario => :scen, :Period => :year)
 ssps = unique(lifeexp[!,:scen])
 
 # Averaging with population weights at region level
-lifeexp = join(lifeexp, pop2015weight[:,[:isonum, :fundregion, :weight]], on = :isonum, kind = :inner)
-lifeexp = by(lifeexp, [:scen, :year, :fundregion], df -> sum(df[!,:lifeexp] .* df[!,:weight]))
+lifeexp = innerjoin(lifeexp, pop2015weight[:,[:isonum, :fundregion, :weight]], on = :isonum)
+lifeexp = combine(groupby(lifeexp, [:scen, :year, :fundregion]), df -> sum(df[!,:lifeexp] .* df[!,:weight]))
 lifeexp = rename(lifeexp, :x1 => :lifeexp)
 sort!(lifeexp,[:scen, :fundregion, :year])
 
@@ -114,7 +114,7 @@ end
 
 # Sorting the data
 regionsdf = DataFrame(fundregion = regions, index = 1:16)
-lifeexp = join(lifeexp, regionsdf, on = :fundregion)
+lifeexp = innerjoin(lifeexp, regionsdf, on = :fundregion)
 sort!(lifeexp, [:scen, :year, :index])
 
 # Write data for each SSP separately
