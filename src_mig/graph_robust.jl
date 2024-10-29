@@ -1057,7 +1057,7 @@ exposed_all_norem[(exposed_all_norem[:,:btype].!="overallclosed"),:] |> @vlplot(
     color={"btype:o",scale={scheme=:dark2},legend={title=string("Migrant outflows"), titleFontSize=24, titleLimit=240, symbolSize=100, labelFontSize=24, labelLimit=260, offset=10}},
     shape="btype:o",
     resolve = {scale={size=:independent}}
-) |> save(joinpath(@__DIR__, "../results/damages/", string("Fig17_update.png")))
+) |> save(joinpath(@__DIR__, "../results/damages/", string("FigS17_update.png")))
 
 
 # Compare emissions in Mig-FUND for different border policy scenarios
