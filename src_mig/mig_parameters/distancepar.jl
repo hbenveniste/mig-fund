@@ -6,7 +6,7 @@ regions = ["USA", "CAN", "WEU", "JPK", "ANZ", "EEU", "FSU", "MDE", "CAM", "LAM",
 
 
 # Calculating population weights based on country level population data in 2015 from the UN World Population Prospects 2019
-pop_allvariants = CSV.read(joinpath(@__DIR__, "../input_data/WPP2019.csv"), DataFrame)
+pop_allvariants = CSV.read(joinpath(@__DIR__, "../../input_data/WPP2019.csv"), DataFrame)
 # We use the Medium variant, the most commonly used. Unit: thousands
 pop2015 = @from i in pop_allvariants begin
     @where i.Variant == "Medium" && i.Time == 2015
@@ -22,7 +22,7 @@ pop2015 = push!(pop2015, [832, "Jersey", pop2015[channelsind,:PopTotal]*0.6])
 pop2015 = pop2015[[1:(channelsind-1); (channelsind+1:end)],:]
 rename!(pop2015, :LocID => :isonum, :Location => :country, :PopTotal => :pop)
 
-isonum_fundregion = CSV.read("../input_data/isonum_fundregion.csv", DataFrame)
+isonum_fundregion = CSV.read(joinpath(@__DIR__,"../../input_data/isonum_fundregion.csv"), DataFrame)
 pop2015weight = innerjoin(pop2015, isonum_fundregion, on = :isonum)
 weight = combine(groupby(pop2015weight, :fundregion), df -> sum(df[!,:pop]))
 pop2015weight[!,:weight] = [pop2015weight[i,:pop] / weight[!,:x1][findfirst(weight[!,:fundregion] .== pop2015weight[i,:fundregion])] for i in eachindex(pop2015weight[:,1])]
@@ -60,7 +60,7 @@ loc = innerjoin(loc, pop2015weight[:,[:country_code, :fundregion, :weight]], on 
 coordinates = combine(groupby(loc, :fundregion), d -> (lat = sum(d.Latitude .* d.weight), lon = sum(d.Longitude .* d.weight)))
 
 # Read earth radius data
-earthradius = readdlm("../input_data/earth_radius.csv", skipstart = 1, comments = true)         # in km
+earthradius = readdlm(joinpath(@__DIR__,"../../input_data/earth_radius.csv"), skipstart = 1, comments = true)         # in km
 
 # Prepare distance DataFrame
 dist = DataFrame(
@@ -79,9 +79,10 @@ dist[!,:distance] = [haversine(dist[!,:loc_or][i], dist[!,:loc_dest][i], earthra
 
 # Sort data
 regionsdf = DataFrame(origin = regions, index_or = 1:16)
-dist = inner(dist, regionsdf, on = :origin)
+dist = innerjoin(dist, regionsdf, on = :origin)
 rename!(regionsdf, :origin => :destination, :index_or => :index_dest)
-dist = inner(dist, regionsdf, on = :destination)
-sort!(dist, (:index_or, :index_dest))
+dist = innerjoin(dist, regionsdf, on = :destination)
+sort!(dist, [:index_or, :index_dest])
 
-CSV.write("../data_mig/distance.csv", dist[:,[:origin, :destination, :distance]]; writeheader=false)     # Distance is expressed in km.
+
+CSV.write(joinpath(@__DIR__,"../../data_mig/distance.csv"), dist[:,[:origin, :destination, :distance]]; writeheader=false)     # Distance is expressed in km.

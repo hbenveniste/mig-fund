@@ -184,5 +184,6 @@ val2 = age_all[118,:share] * 5
 a2 = (val2 - sum(age_all[118:120,:share])) / 2
 for i in size(age_all,1)-2:size(age_all,1) ; age_all[i, :share] = a2 end
 
+
 CSV.write(joinpath(@__DIR__,"../../data_mig/ageshare.csv"), age_all[:,[:ageall,:share]]; writeheader=false)
 CSV.write(joinpath(@__DIR__, "../../input_data/agegroup.csv"), agegroup)

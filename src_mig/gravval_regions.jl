@@ -5,17 +5,7 @@ using Statistics, Query
 
 ############################################ Read data on gravity-derived migration ##############################################
 # We use the migration flow data from Azose and Raftery (2018) as presented in Abel and Cohen (2019)
-data_ar = CSV.read(joinpath(@__DIR__,"../input_data/data_ar.csv"), DataFrame)
-fe_ar_yfe = CSV.read(joinpath(@__DIR__,"../input_data/fe_ar_yfe.csv"), DataFrame)
-fe_ar_odyfe = CSV.read(joinpath(@__DIR__,"../input_data/fe_ar_odyfe.csv"), DataFrame)
-beta = CSV.read(joinpath(@__DIR__,"../input_data/beta.csv"), DataFrame)
-
-
-############################################ using specification with remshare endogenous ###################################
-
-############################################ Read data on gravity-derived migration ##############################################
-# We use the migration flow data from Azose and Raftery (2018) as presented in Abel and Cohen (2019)
-gravity_endo = CSV.read(joinpath(@__DIR__,"../results/gravity/gravity_endo.csv"), DataFrame)
+gravity_endo = CSV.read(joinpath(@__DIR__,"../results/gravity/gravity_endo_update.csv"), DataFrame)
 fe_endo_yfe = CSV.read(joinpath(@__DIR__,"../results/gravity/fe_endo_yfe.csv"), DataFrame)
 fe_endo_odyfe = CSV.read(joinpath(@__DIR__,"../results/gravity/fe_endo_odyfe.csv"), DataFrame)
 beta_endo = CSV.read(joinpath(@__DIR__,"../results/gravity/beta_endo.csv"), DataFrame)
@@ -29,8 +19,8 @@ end
 ############################################ Obtain residuals from gravity model at FUND regions level #####################################
 # First with only year fixed effects, as in our main specification
 ireg = findfirst(beta_endo[!,:regtype].=="reg_endo_yfe")
-gravval_endo = innerjoin(data_endo, unique(fe_endo_yfe[!,[:year,:fe_YearCategorical]]), on = :year)
-rename!(gravval_endo, :flow_AzoseRaftery => :flowmig, :fe_YearCategorical => :fe_year_only)
+gravval_endo = innerjoin(data_endo, unique(fe_endo_yfe[!,[:year,:fe_year]]), on = :year)
+rename!(gravval_endo, :flow_AzoseRaftery => :flowmig, :fe_year => :fe_year_only)
 
 # No need for the constant beta0 which is an average of year fixed effects
 gravval_endo[!,:flowmig_grav] = gravval_endo[:,:pop_orig].^beta_endo[ireg,:b1] .* gravval_endo[:,:pop_dest].^beta_endo[ireg,:b2] .* gravval_endo[:,:ypc_orig].^beta_endo[ireg,:b4] .* gravval_endo[:,:ypc_dest].^beta_endo[ireg,:b5] .* gravval_endo[:,:distance].^beta_endo[ireg,:b7] .* gravval_endo[:,:exp_residual].^beta_endo[ireg,:b8] .* gravval_endo[:,:remcost].^beta_endo[ireg,:b9] .* gravval_endo[:,:comofflang].^beta_endo[ireg,:b10] .* map( x -> exp(x), gravval_endo[!,:fe_year_only]) 
@@ -60,7 +50,9 @@ regionsdf = DataFrame(originregion = repeat(regions, inner = length(regions)), i
 res_endo = innerjoin(res_endo, regionsdf, on = [:originregion, :destinationregion])
 sort!(res_endo, [:indexo, :indexd])
 select!(res_endo, Not([:indexo, :indexd]))
-CSV.write(joinpath(@__DIR__,"../data_mig/gravres.csv"), res_endo; writeheader=false)
+
+CSV.write(joinpath(@__DIR__,"../data_mig/gravres_update.csv"), res_endo; writeheader=false)
+
 
 # Sensitivity analysis: use only period 2010-2015 for projecting residuals in gravity model
 res_endo_sa = rename(gravval_endo_reg[(gravval_endo_reg[:,:year].==2010),[:originregion,:destinationregion,:diff_flowmig_reg_btw]],:diff_flowmig_reg_btw=>:residuals)
@@ -72,7 +64,9 @@ res_endo_sa = vcat(res_endo_sa,misscorrval)
 res_endo_sa = innerjoin(res_endo_sa, regionsdf, on = [:originregion, :destinationregion])
 sort!(res_endo_sa, [:indexo, :indexd])
 select!(res_endo_sa, Not([:indexo, :indexd]))
-CSV.write(joinpath(@__DIR__,"../data_mig/gravres_1p.csv"), res_endo_sa; writeheader=false)
+
+CSV.write(joinpath(@__DIR__,"../data_mig/gravres_1p_update.csv"), res_endo_sa; writeheader=false)
+
 
 # Plot: distribution of residuals across corridors, for all 5 periods
 regions_fullname = DataFrame(
@@ -107,4 +101,4 @@ gravval_endo_reg |> @vlplot(
     color={"originname:o",scale={scheme=:tableau20},legend={title=string("Origin region"), titleFontSize=20, titleLimit=240, symbolSize=80, labelFontSize=24, labelLimit=280, offset=2}},
     resolve = {scale={y=:independent}},
     #title = "Residuals for each destination region"
-) |> save(joinpath(@__DIR__, "../results/gravity/", "FigS1.png"))
+) |> save(joinpath(@__DIR__, "../results/gravity/", "FigS1_update.png"))

@@ -10,12 +10,12 @@ ind = Dict(regions[i] => i for i in eachindex(regions))
 # And data on missing migrants in period 2014-2018 from IOM (http://missingmigrants.iom.int/). Retrieved on 10/3/2018.
 
 # Calculating migrant flows at FUND regions level 
-migflow_alldata = CSV.read(joinpath(@__DIR__, "../input_data/ac19.csv"), DataFrame)          # Use Abel and Cohen (2019)
+migflow_alldata = CSV.read(joinpath(@__DIR__, "../../input_data/ac19.csv"), DataFrame)          # Use Abel and Cohen (2019)
 # From Abel and Cohen's paper, I choose Azose and Raftery's data for 1990-2015, on Guy Abel's suggestion (based a demographic accounting, pseudo-Bayesian method, which performs the best)
 migflow = migflow_alldata[(migflow_alldata[:,:year0].==2010),[:orig, :dest, :da_pb_closed]]
 rename!(migflow, :da_pb_closed => :flow)
 
-iso3c_fundregion = CSV.read("../input_data/iso3c_fundregion.csv", DataFrame)
+iso3c_fundregion = CSV.read(joinpath(@__DIR__,"../../input_data/iso3c_fundregion.csv"), DataFrame)
 rename!(iso3c_fundregion, :iso3c => :orig)
 migflow = innerjoin(migflow, iso3c_fundregion, on = :orig)
 rename!(migflow, :fundregion => :originregion)
@@ -30,9 +30,15 @@ migflow_reg = innerjoin(migflow_reg, regionsdf, on = [:origin, :destination])
 sort!(migflow_reg, :index)
 select!(migflow_reg, Not(:index))
 
-migflows = combine(groupby(migflow_reg, [:origin, :destination]), df -> df.flows ./ 5)  # Get yearly estimates
-rename!(migflows, :x1 => :flows)
-CSV.write("../input_data/migflows.csv", migflows)     
+migflows = DataFrame(
+    origin = migflow_reg.origin,
+    destination = migflow_reg.destination,
+    flows = migflow_reg.flows ./ 5  # Get yearly estimates
+)
+
+
+CSV.write(joinpath(@__DIR__,"../../input_data/migflows.csv"), migflows)     
+
 
 flows = transpose(migflows[eachindex(regions),:flows])
 # Error with vcat
@@ -178,4 +184,5 @@ for o in eachindex(regions)
 end
 migdeathrisk[!,:deathrisk] = deathrisk
 
-CSV.write("../data_mig/migdeathrisk.csv", migdeathrisk; writeheader=false)     
+
+CSV.write(joinpath(@__DIR__,"../../data_mig/migdeathrisk.csv"), migdeathrisk; writeheader=false)     

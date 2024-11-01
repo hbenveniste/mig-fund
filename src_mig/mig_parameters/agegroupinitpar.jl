@@ -2,32 +2,30 @@ using CSV, DataFrames, Query, DelimitedFiles, FileIO, XLSX
 
 
 regions = ["USA", "CAN", "WEU", "JPK", "ANZ", "EEU", "FSU", "MDE", "CAM", "LAM", "SAS", "SEA", "CHI", "MAF", "SSA", "SIS"]
+iso3c_fundregion = CSV.File(joinpath(@__DIR__,"../../input_data/iso3c_fundregion.csv")) |> DataFrame
 
 # Computing the initial stock of migrants, and how it declines over time
-# I use bilateral migration stocks from 2017 from the World Bank
-# In order to get its age distribution, I assume that it is the average of two age distributions in the destination country: 
+# We use bilateral migration stocks from 2017 from the World Bank
+# In order to get its age distribution, we assume that it is the average of two age distributions in the destination country: 
 # the one of migrants at time of migration in the period 2015-2020 (computed from the SSP2 as "share")
 # and the one of the overall destination population in the period 2015-2020 (based on SSP2)
 
 # Reading bilateral migrant stocks from 2017
 migstock_matrix = XLSX.readdata(joinpath(@__DIR__, "../../input_data/WB_Bilateral_Estimates_Migrant_Stocks_2017.xlsx"), "Bilateral_Migration_2017!A2:HJ219") 
-igstock_matrix = DataFrame(migstock_matrix, :auto)
-header = 3
-countries = migstock_matrix[(header):(length(migstock_matrix[:,1]) - 3), 1]
-migstock = DataFrame(
-    origin = repeat(countries, inner = length(countries)), 
-    destination = repeat(countries, outer = length(countries))
-)
-stock = []
-for o in (header):(length(countries)+header-1)
-    ostock = migstock_matrix[o, 2:(end - 3)]
-    append!(stock, ostock)
-end
-migstock.stock = stock
-indmissing = findall([typeof(migstock[i,:stock]) != Int64 for i in eachindex(migstock[:,1])])
-for i in indmissing
-    migstock[i,:stock] = 0.0
-end 
+migstock_matrix = DataFrame(migstock_matrix, :auto)
+rename!(migstock_matrix, Symbol.(Vector(migstock_matrix[1,:])))
+deleteat!(migstock_matrix,1)
+countriesm = migstock_matrix[1:214,1]
+migstock = stack(migstock_matrix, 2:215)
+select!(migstock, Not([Symbol("Other North"), Symbol("Other South"), :World]))
+rename!(migstock, :missing => :origin, :variable => :destination, :value => :stock)
+sort!(migstock, :origin)
+indregion = vcat(findall(migstock[!,:origin] .== "Other North"), findall(migstock[!,:origin] .== "Other South"), findall(migstock[!,:origin] .== "World"))
+delete!(migstock, indregion)
+indmissing = findall([ismissing(migstock[i,:stock]) for i in eachindex(migstock[:,1])])
+for i in indmissing ; migstock[!,:stock][i] = 0.0 end
+migstock[!,:stock] = map(x -> float(x), migstock[!,:stock])
+migstock[!,:destination] = map(x -> string(x), migstock[!,:destination])
 
 # Converting into country codes
 ccode = XLSX.readdata(joinpath(@__DIR__,"../../input_data/GDPpercap2017.xlsx"), "Data!A1:E218") 
@@ -46,7 +44,6 @@ migstock = innerjoin(migstock, ccode, on = :origin)
 rename!(migstock, :country_code => :orig_code)
 select!(migstock, Not([:origin, :destination]))
 
-iso3c_fundregion = CSV.read("../input_data/iso3c_fundregion.csv", DataFrame)
 rename!(iso3c_fundregion, :iso3c => :orig_code)
 migstock = leftjoin(migstock, iso3c_fundregion, on = :orig_code)
 rename!(migstock, :fundregion => :origin)
@@ -74,12 +71,14 @@ rename!(migstock_reg, :x1 => :stock)
 # Sorting the data
 regionsdf = DataFrame(origin = repeat(regions, inner = length(regions)), indexo = repeat(1:16, inner = length(regions)), destination = repeat(regions, outer = length(regions)), indexd = repeat(1:16, outer = length(regions)))
 migstock_reg = outerjoin(migstock_reg, regionsdf, on = [:origin, :destination])
-sort!(migstock_reg, (:indexo, :indexd))
-CSV.write("../data_mig/migstockinit.csv", migstock_reg[:,[:origin, :destination, :stock]]; writeheader=false)
+sort!(migstock_reg, [:indexo, :indexd])
+
+
+CSV.write(joinpath(@__DIR__,"../../data_mig/migstockinit_update.csv"), migstock_reg[:,[:origin, :destination, :stock]]; writeheader=false)
 
 
 # Getting age distributions
-agegroup = CSV.read(joinpath(@__DIR__, "../input_data/agegroup.csv"), DataFrame)
+agegroup = CSV.read(joinpath(@__DIR__, "../../input_data/agegroup.csv"), DataFrame)
 agedist = @from i in agegroup begin
     @where i.period == 2015 && i.scen == "SSP2"
     @select {i.fundregion, i.age, i.pop, migshare = i.share}
@@ -130,4 +129,5 @@ for o in 0:length(regions)-1
     end
 end
 
-CSV.write("../data_mig_3d/agegroupinit.csv", migstock_all[:,[:origin, :destination, :ageall,:stock_by_age]]; writeheader=false)
+
+CSV.write(joinpath(@__DIR__,"../../data_mig_3d/agegroupinit_update.csv"), migstock_all[:,[:origin, :destination, :ageall,:stock_by_age]]; writeheader=false)

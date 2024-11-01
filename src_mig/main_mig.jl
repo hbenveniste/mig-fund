@@ -52,13 +52,13 @@ function getmigrationmodel(;datamigdir=path_datamigdir,scen="SSP2",migyesno="mig
     set_param!(m, :migration, :distance, param_mig[:distance])
     set_param!(m, :migration, :migdeathrisk, param_mig[:migdeathrisk])
     set_param!(m, :migration, :ageshare, param_mig[:ageshare])
-    set_param!(m, :migration, :agegroupinit, param_mig_3["agegroupinit"])
-    set_param!(m, :migration, :remres, param_mig[:remres])
-    set_param!(m, :migration, :remcost, param_mig[:remcost])
+    set_param!(m, :migration, :agegroupinit, param_mig_3["agegroupinit_update"])
+    set_param!(m, :migration, :remres, param_mig[:remres_update])
+    set_param!(m, :migration, :remcost, param_mig[:remcost_update])
     set_param!(m, :migration, :comofflang, param_mig[:comofflang])
     set_param!(m, :migration, :policy, param_mig[:policy])
-    set_param!(m, :migration, :migstockinit, param_mig[:migstockinit])
-    set_param!(m, :migration, :gravres, param_mig[:gravres])
+    set_param!(m, :migration, :migstockinit, param_mig[:migstockinit_update])
+    set_param!(m, :migration, :gravres, param_mig[:gravres_update])
 
     # scenconverter component connections
     connect_param!(m, :scenariouncertainty, :scenpgrowth, :scenconverter, :scenpgrowth)

@@ -1,4 +1,4 @@
-using CSV, DataFrames, Statistics, Query, DelimitedFiles, FileIO, ExcelFiles, XLSX
+using CSV, DataFrames, Statistics, Query, DelimitedFiles, FileIO, ExcelFiles, XLSX, VegaLite
 
 
 regions = ["USA", "CAN", "WEU", "JPK", "ANZ", "EEU", "FSU", "MDE", "CAM", "LAM", "SAS", "SEA", "CHI", "MAF", "SSA", "SIS"]

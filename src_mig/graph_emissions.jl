@@ -124,6 +124,7 @@ rename!(em_world_p, :worldem_migFUND => :worldem_currentborders, :worldem_migFUN
 
 em_world_stack = stack(em_world_p,[:worldem_currentborders,:worldem_closedborders,:worldem_moreopen,:worldem_bordersnorthsouth],[:scen,:year])
 rename!(em_world_stack,:variable => :worldem_type, :value => :worldem)
+
 em_world_stack |> @filter(_.year >= 2015 && _.year <= 2100)  |> @vlplot()+@vlplot(
     width=500, height=400, mark={:point, size=80}, 
     x = {"year:o", axis={labelFontSize=16}, title=nothing}, 

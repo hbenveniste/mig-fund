@@ -467,4 +467,5 @@ end
 
 # Register regional damages for period 1990-2015. We focus on SSP2 and current borders (virtually no difference with other scenarios)
 damcalib = damages[.&(damages[:,:year].>=1990,damages[:,:year].<=2015,map(x->mod(x,5)==0,damages[:,:year]),damages[:,:scen].=="SSP2"),[:year,:fundregion,:damgdp_currentborders]]
+
 CSV.write(joinpath(@__DIR__,"../input_data/damcalib.csv"),damcalib;writeheader=false)

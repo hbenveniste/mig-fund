@@ -5,7 +5,7 @@ using Statistics, Query
 
 ############################################ Read data on gravity-derived migration ##############################################
 # We use the migration flow data from Azose and Raftery (2018) as presented in Abel and Cohen (2019)
-gravity_endo = CSV.read(joinpath(@__DIR__,"../results/gravity/gravity_endo.csv"), DataFrame)
+gravity_endo = CSV.read(joinpath(@__DIR__,"../results/gravity/gravity_endo_update.csv"), DataFrame)
 
 # gravity_endo has data in log. We transform it back.
 data = gravity_endo[:,[:year,:orig,:dest,:flow_AzoseRaftery,:pop_orig,:pop_dest,:ypc_orig,:ypc_dest]]
@@ -16,13 +16,13 @@ data[!,:gdp_orig] = data[:,:pop_orig] .* data[:,:ypc_orig]
 data[!,:gdp_dest] = data[:,:pop_dest] .* data[:,:ypc_dest]
 
 # Transpose to FUND region * region level. 
-iso3c_fundregion = CSV.read("../input_data/iso3c_fundregion.csv", DataFrame)
+iso3c_fundregion = CSV.read(joinpath(@__DIR__,"../input_data/iso3c_fundregion.csv"), DataFrame)
 data = innerjoin(data, rename(iso3c_fundregion, :fundregion => :originregion, :iso3c => :orig), on =:orig)
 data = innerjoin(data, rename(iso3c_fundregion, :fundregion => :destinationregion, :iso3c => :dest), on =:dest)
 
 data_reg = combine(groupby(data, [:year,:originregion,:destinationregion]), d->(migflow=sum(d.flow_AzoseRaftery),pop_o=sum(d.pop_orig),pop_d=sum(d.pop_dest),gdp_o=sum(d.gdp_orig),gdp_d=sum(d.gdp_dest)))
 
-remcost = CSV.read(joinpath(@__DIR__,"../data_mig/remcost.csv"), DataFrame;header=false)
+remcost = CSV.read(joinpath(@__DIR__,"../data_mig/remcost_update.csv"), DataFrame;header=false)
 data_reg = innerjoin(data_reg, rename(remcost, :Column1=>:originregion,:Column2=>:destinationregion,:Column3=>:remcost),on=[:originregion,:destinationregion])
 
 distance = CSV.read(joinpath(@__DIR__,"../data_mig/distance.csv"), DataFrame;header=false)
@@ -60,36 +60,31 @@ gravity_reg = @from i in logdata_reg begin
     @collect DataFrame
 end
 
-# Compute linear regression with FixedEffectModels package
-gravity_reg.OrigCategorical = categorical(gravity_reg.originregion)
-gravity_reg.DestCategorical = categorical(gravity_reg.destinationregion)
-gravity_reg.YearCategorical = categorical(gravity_reg.year)
-
 # Estimate the main gravity equation using residuals from remshare regression
-rer1 = reg(gravity_reg, @formula(migflow ~ pop_o + pop_d + ypc_o + ypc_d + distance + exp_residual + remcost + comofflang + fe(YearCategorical)), Vcov.cluster(:OrigCategorical, :DestCategorical), save=true)
-rer2 = reg(gravity_reg, @formula(migflow ~ pop_o + pop_d + ypc_o + ypc_d + distance + exp_residual + remcost + comofflang + fe(OrigCategorical) + fe(DestCategorical) + fe(YearCategorical)), Vcov.cluster(:OrigCategorical, :DestCategorical), save=true)
+rer1 = reg(gravity_reg, @formula(migflow ~ pop_o + pop_d + ypc_o + ypc_d + distance + exp_residual + remcost + comofflang + fe(year)), Vcov.cluster(:originregion, :destinationregion), save=true)
+rer2 = reg(gravity_reg, @formula(migflow ~ pop_o + pop_d + ypc_o + ypc_d + distance + exp_residual + remcost + comofflang + fe(originregion) + fe(destinationregion) + fe(year)), Vcov.cluster(:originregion, :destinationregion), save=true)
 
-regtable(rer1, rer2; renderSettings = latexOutput(),regression_statistics=[:nobs, :r2, :r2_within])     
+regtable(rer1, rer2; render = LatexTable(),regression_statistics=[:nobs, :r2, :r2_within])     
 
 beta_reg = DataFrame(
     regtype = ["reg_reg_yfe","reg_reg_odyfe"],
-    b1 = [0.676,1.226],       # pop_o
-    b2 = [0.524,1.581],       # pop_d
-    b4 = [0.895,0.429],       # ypc_o
-    b5 = [1.427,0.473],       # ypc_d
-    b7 = [-0.711,-0.680],       # distance
-    b8 = [-0.293,-0.190],       # exp_residual
-    b9 = [14.647,-1.379],       # remcost
-    b10 = [2.183,0.504]     # comofflang
+    b1 = [0.679,1.190],       # pop_o
+    b2 = [0.499,1.599],       # pop_d
+    b4 = [0.894,0.454],       # ypc_o
+    b5 = [1.405,0.469],       # ypc_d
+    b7 = [-0.712,-0.686],       # distance
+    b8 = [-0.275,-0.183],       # exp_residual
+    b9 = [3.479,-7.690],       # remcost
+    b10 = [2.148,0.480]     # comofflang
 )
 
 # Compute constant including year fixed effect as average of beta0 + yearFE
-cst_reg_yfe = hcat(gravity_reg[:,Not([:OrigCategorical,:DestCategorical,:YearCategorical])], fe(rer1))
+cst_reg_yfe = hcat(gravity_reg[:,Not([:originregion,:destinationregion,:year])], fe(rer1))
 cst_reg_yfe[!,:constant] = cst_reg_yfe[!,:migflow] .- beta_reg[1,:b1] .* cst_reg_yfe[!,:pop_o] .- beta_reg[1,:b2] .* cst_reg_yfe[!,:pop_d] .- beta_reg[1,:b4] .* cst_reg_yfe[!,:ypc_o] .- beta_reg[1,:b5] .* cst_reg_yfe[!,:ypc_d] .- beta_reg[1,:b7] .* cst_reg_yfe[!,:distance] .- beta_reg[1,:b8] .* cst_reg_yfe[!,:exp_residual] .- beta_reg[1,:b9] .* cst_reg_yfe[!,:remcost] .- beta_reg[1,:b10] .* cst_reg_yfe[!,:comofflang]
 constant_reg_yfe = mean(cst_reg_yfe[!,:constant])
 
-cst_reg_odyfe = hcat(gravity_reg[:,Not([:OrigCategorical,:DestCategorical,:YearCategorical])], fe(rer2))
-cst_reg_odyfe[!,:constant] = cst_reg_odyfe[!,:migflow] .- beta_reg[2,:b1] .* cst_reg_odyfe[!,:pop_o] .- beta_reg[2,:b2] .* cst_reg_odyfe[!,:pop_d] .- beta_reg[2,:b4] .* cst_reg_odyfe[!,:ypc_o] .- beta_reg[2,:b5] .* cst_reg_odyfe[!,:ypc_d] .- beta_reg[2,:b7] .* cst_reg_odyfe[!,:distance] .- beta_reg[2,:b8] .* cst_reg_odyfe[!,:exp_residual] .- beta_reg[2,:b9] .* cst_reg_odyfe[!,:remcost] .- beta_reg[2,:b10] .* cst_reg_odyfe[!,:comofflang] .- cst_reg_odyfe[!,:fe_OrigCategorical] .- cst_reg_odyfe[!,:fe_DestCategorical]
+cst_reg_odyfe = hcat(gravity_reg[:,Not([:originregion,:destinationregion,:year])], fe(rer2))
+cst_reg_odyfe[!,:constant] = cst_reg_odyfe[!,:migflow] .- beta_reg[2,:b1] .* cst_reg_odyfe[!,:pop_o] .- beta_reg[2,:b2] .* cst_reg_odyfe[!,:pop_d] .- beta_reg[2,:b4] .* cst_reg_odyfe[!,:ypc_o] .- beta_reg[2,:b5] .* cst_reg_odyfe[!,:ypc_d] .- beta_reg[2,:b7] .* cst_reg_odyfe[!,:distance] .- beta_reg[2,:b8] .* cst_reg_odyfe[!,:exp_residual] .- beta_reg[2,:b9] .* cst_reg_odyfe[!,:remcost] .- beta_reg[2,:b10] .* cst_reg_odyfe[!,:comofflang] .- cst_reg_odyfe[!,:fe_originregion] .- cst_reg_odyfe[!,:fe_destinationregion]
 constant_reg_odyfe = mean(cst_reg_odyfe[!,:constant])
 
 beta_reg[!,:b0] = [constant_reg_yfe,constant_reg_odyfe]       # constant
@@ -99,9 +94,9 @@ fe_reg_yfe = hcat(gravity_reg[:,[:year,:originregion,:destinationregion]], fe(re
 fe_reg_odyfe = hcat(gravity_reg[:,[:year,:originregion,:destinationregion]], fe(rer2))
 
 
-CSV.write(joinpath(@__DIR__,"../results/gravity/beta_reg.csv"), beta_reg)
+CSV.write(joinpath(@__DIR__,"../results/gravity/beta_reg_update.csv"), beta_reg)
 
-CSV.write(joinpath(@__DIR__,"../results/gravity/fe_reg_yfe.csv"), fe_reg_yfe)
-CSV.write(joinpath(@__DIR__,"../results/gravity/fe_reg_odyfe.csv"), fe_reg_odyfe)
+CSV.write(joinpath(@__DIR__,"../results/gravity/fe_reg_yfe_update.csv"), fe_reg_yfe)
+CSV.write(joinpath(@__DIR__,"../results/gravity/fe_reg_odyfe_update.csv"), fe_reg_odyfe)
 
-CSV.write(joinpath(@__DIR__,"../results/gravity/gravity_reg.csv"), gravity_reg)
+CSV.write(joinpath(@__DIR__,"../results/gravity/gravity_reg_update.csv"), gravity_reg)

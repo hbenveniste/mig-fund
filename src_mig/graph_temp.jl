@@ -24,20 +24,6 @@ ssps = ["SSP1-RCP1.9","SSP2-RCP4.5","SSP3-RCP7.0","SSP4-RCP6.0","SSP5-RCP8.5"]
 regions = ["USA", "CAN", "WEU", "JPK", "ANZ", "EEU", "FSU", "MDE", "CAM", "LAM", "SAS", "SEA", "CHI", "MAF", "SSA", "SIS"]
 years = 1951:2100
 
-temp = DataFrame(
-    year = repeat(years, outer = length(ssps)),
-    scen = repeat(ssps,inner = length(years)),
-)
-
-temp_migFUND = vcat(
-    collect(Iterators.flatten(m_ssp1_nomig[:climatedynamics,:temp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
-    collect(Iterators.flatten(m_ssp2_nomig[:climatedynamics,:temp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
-    collect(Iterators.flatten(m_ssp3_nomig[:climatedynamics,:temp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
-    collect(Iterators.flatten(m_ssp4_nomig[:climatedynamics,:temp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
-    collect(Iterators.flatten(m_ssp5_nomig[:climatedynamics,:temp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:]))
-)
-temp[:,:temp_migFUND] = temp_migFUND
-
 
 # Compare temperature in Mig-FUND for different border policy scenarios
 # Closed borders between regions
@@ -58,15 +44,6 @@ run(m_ssp3_nomig_cb)
 run(m_ssp4_nomig_cb)
 run(m_ssp5_nomig_cb)
 
-temp_migFUND_cb = vcat(
-    collect(Iterators.flatten(m_ssp1_nomig_cb[:climatedynamics,:temp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
-    collect(Iterators.flatten(m_ssp2_nomig_cb[:climatedynamics,:temp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
-    collect(Iterators.flatten(m_ssp3_nomig_cb[:climatedynamics,:temp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
-    collect(Iterators.flatten(m_ssp4_nomig_cb[:climatedynamics,:temp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
-    collect(Iterators.flatten(m_ssp5_nomig_cb[:climatedynamics,:temp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:]))
-)
-temp[:,:temp_migFUND_cb] = temp_migFUND_cb
-
 m_ssp1_nomig_ob = getmigrationmodel(scen="SSP1",migyesno="nomig")
 m_ssp2_nomig_ob = getmigrationmodel(scen="SSP2",migyesno="nomig")
 m_ssp3_nomig_ob = getmigrationmodel(scen="SSP3",migyesno="nomig")
@@ -83,15 +60,6 @@ run(m_ssp3_nomig_ob)
 run(m_ssp4_nomig_ob)
 run(m_ssp5_nomig_ob)
 
-temp_migFUND_ob = vcat(
-    collect(Iterators.flatten(m_ssp1_nomig_ob[:climatedynamics,:temp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
-    collect(Iterators.flatten(m_ssp2_nomig_ob[:climatedynamics,:temp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
-    collect(Iterators.flatten(m_ssp3_nomig_ob[:climatedynamics,:temp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
-    collect(Iterators.flatten(m_ssp4_nomig_ob[:climatedynamics,:temp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
-    collect(Iterators.flatten(m_ssp5_nomig_ob[:climatedynamics,:temp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:]))
-)
-temp[:,:temp_migFUND_ob] = temp_migFUND_ob
-
 m_ssp1_nomig_2w = getmigrationmodel(scen="SSP1",migyesno="nomig")
 m_ssp2_nomig_2w = getmigrationmodel(scen="SSP2",migyesno="nomig")
 m_ssp3_nomig_2w = getmigrationmodel(scen="SSP3",migyesno="nomig")
@@ -107,6 +75,39 @@ run(m_ssp2_nomig_2w)
 run(m_ssp3_nomig_2w)
 run(m_ssp4_nomig_2w)
 run(m_ssp5_nomig_2w)
+
+
+temp = DataFrame(
+    year = repeat(years, outer = length(ssps)),
+    scen = repeat(ssps,inner = length(years)),
+)
+
+temp_migFUND = vcat(
+    collect(Iterators.flatten(m_ssp1_nomig[:climatedynamics,:temp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp2_nomig[:climatedynamics,:temp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp3_nomig[:climatedynamics,:temp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp4_nomig[:climatedynamics,:temp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp5_nomig[:climatedynamics,:temp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:]))
+)
+temp[:,:temp_migFUND] = temp_migFUND
+
+temp_migFUND_cb = vcat(
+    collect(Iterators.flatten(m_ssp1_nomig_cb[:climatedynamics,:temp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp2_nomig_cb[:climatedynamics,:temp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp3_nomig_cb[:climatedynamics,:temp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp4_nomig_cb[:climatedynamics,:temp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp5_nomig_cb[:climatedynamics,:temp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:]))
+)
+temp[:,:temp_migFUND_cb] = temp_migFUND_cb
+
+temp_migFUND_ob = vcat(
+    collect(Iterators.flatten(m_ssp1_nomig_ob[:climatedynamics,:temp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp2_nomig_ob[:climatedynamics,:temp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp3_nomig_ob[:climatedynamics,:temp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp4_nomig_ob[:climatedynamics,:temp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),
+    collect(Iterators.flatten(m_ssp5_nomig_ob[:climatedynamics,:temp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:]))
+)
+temp[:,:temp_migFUND_ob] = temp_migFUND_ob
 
 temp_migFUND_2w = vcat(
     collect(Iterators.flatten(m_ssp1_nomig_2w[:climatedynamics,:temp][MimiFUND.getindexfromyear(1951):MimiFUND.getindexfromyear(2100),:])),

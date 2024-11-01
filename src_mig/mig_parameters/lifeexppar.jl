@@ -5,7 +5,7 @@ regions = ["USA", "CAN", "WEU", "JPK", "ANZ", "EEU", "FSU", "MDE", "CAM", "LAM",
 
 
 # Calculating population weights based on country level population data in 2015 from the UN World Population Prospects 2019
-pop_allvariants = CSV.read(joinpath(@__DIR__, "../input_data/WPP2019.csv"), DataFrame)
+pop_allvariants = CSV.read(joinpath(@__DIR__, "../../input_data/WPP2019.csv"), DataFrame)
 # We use the Medium variant, the most commonly used. Unit: thousands
 pop2015 = @from i in pop_allvariants begin
     @where i.Variant == "Medium" && i.Time == 2015
@@ -21,7 +21,7 @@ pop2015 = push!(pop2015, [832, "Jersey", pop2015[channelsind,:PopTotal]*0.6])
 pop2015 = pop2015[[1:(channelsind-1); (channelsind+1:end)],:]
 rename!(pop2015, :LocID => :isonum, :Location => :country, :PopTotal => :pop)
 
-isonum_fundregion = CSV.read("../input_data/isonum_fundregion.csv", DataFrame)
+isonum_fundregion = CSV.read(joinpath(@__DIR__,"../../input_data/isonum_fundregion.csv"), DataFrame)
 pop2015weight = innerjoin(pop2015, isonum_fundregion, on = :isonum)
 weight = combine(groupby(pop2015weight, :fundregion), df -> sum(df[!,:pop]))
 pop2015weight[!,:weight] = [pop2015weight[i,:pop] / weight[!,:x1][findfirst(weight[!,:fundregion] .== pop2015weight[i,:fundregion])] for i in eachindex(pop2015weight[:,1])]
@@ -32,7 +32,7 @@ pop2015weight[!,:weight] = [pop2015weight[i,:pop] / weight[!,:x1][findfirst(weig
 # We provide all SSP but have used SSP2 so far.  
 # We assume constant life expectancy after 2100
 
-lifeexp = CSV.read(joinpath(@__DIR__,"../input_data/lifeexp.csv"), DataFrame; header=9)
+lifeexp = CSV.read(joinpath(@__DIR__,"../../input_data/lifeexp.csv"), DataFrame; header=9)
 select!(lifeexp, Not(:Area))
 lifeexp[!,:Period] = map( x -> parse(Int, SubString(x, 1:4)), lifeexp[!,:Period])
 lifeexp = combine(groupby(lifeexp, [:Scenario, :Period, :ISOCode]), d -> mean(d.Years))               # Compute life expectancy for overall population as average between male and female
@@ -119,5 +119,5 @@ sort!(lifeexp, [:scen, :year, :index])
 
 # Write data for each SSP separately
 for s in ssps
-    CSV.write(joinpath(@__DIR__, string("../scen/lifeexp_", s, ".csv")), lifeexp[(lifeexp[:,:scen].==s),[:year, :fundregion, :lifeexp]]; writeheader=false)
+    CSV.write(joinpath(@__DIR__, string("../../scen/lifeexp_", s, ".csv")), lifeexp[(lifeexp[:,:scen].==s),[:year, :fundregion, :lifeexp]]; writeheader=false)
 end
