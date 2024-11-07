@@ -607,14 +607,8 @@ gravity_endo = innerjoin(gravity_endo, rename(iso3c_fundregion, :iso3c => :dest,
 gravity_endo_abel = innerjoin(gravity_endo_abel, rename(iso3c_fundregion, :iso3c => :orig, :fundregion => :originregion), on = :orig)
 gravity_endo_abel = innerjoin(gravity_endo_abel, rename(iso3c_fundregion, :iso3c => :dest, :fundregion => :destinationregion), on = :dest)
 
-# Add continental fixed effects
-gravity_endo.OriginregionCategorical = categorical(gravity_endo.originregion)
-gravity_endo.DestinationregionCategorical = categorical(gravity_endo.destinationregion)
-gravity_endo_abel.OriginregionCategorical = categorical(gravity_endo_abel.originregion)
-gravity_endo_abel.DestinationregionCategorical = categorical(gravity_endo_abel.destinationregion)
-
-rec2 = reg(gravity_endo, @formula(flow_AzoseRaftery ~ pop_orig + pop_dest + ypc_orig + ypc_dest + distance + exp_residual + remcost + comofflang + fe(OriginregionCategorical) + fe(DestinationregionCategorical) + fe(year)), Vcov.cluster(:orig, :dest), save=true)
-rec6 = reg(gravity_endo_abel, @formula(flow_Abel ~ pop_orig + pop_dest + ypc_orig + ypc_dest + distance + exp_residual + remcost + comofflang + fe(OriginregionCategorical) + fe(DestinationregionCategorical) + fe(year)), Vcov.cluster(:orig, :dest), save=true)
+rec2 = reg(gravity_endo, @formula(flow_AzoseRaftery ~ pop_orig + pop_dest + ypc_orig + ypc_dest + distance + exp_residual + remcost + comofflang + fe(originregion) + fe(destinationregion) + fe(year)), Vcov.cluster(:orig, :dest), save=true)
+rec6 = reg(gravity_endo_abel, @formula(flow_Abel ~ pop_orig + pop_dest + ypc_orig + ypc_dest + distance + exp_residual + remcost + comofflang + fe(originregion) + fe(destinationregion) + fe(year)), Vcov.cluster(:orig, :dest), save=true)
 
 regtable(re1, re2, rec2, re5, re6, rec6; render = LatexTable(),regression_statistics=[:nobs, :r2 ])     
 regtable(re1, re2, rec2; render = LatexTable(),regression_statistics=[:nobs, :r2 ])     
