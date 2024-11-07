@@ -7,8 +7,8 @@ iso3c_fundregion = CSV.File(joinpath(@__DIR__,"../../input_data/iso3c_fundregion
 # Computing the initial stock of migrants, and how it declines over time
 # We use bilateral migration stocks from 2017 from the World Bank
 # In order to get its age distribution, we assume that it is the average of two age distributions in the destination country: 
-# the one of migrants at time of migration in the period 2015-2020 (computed from the SSP2 as "share")
-# and the one of the overall destination population in the period 2015-2020 (based on SSP2)
+# the one of migrants at time of migration in the period 2020-2025 (computed from the SSP2 as "share")
+# and the one of the overall destination population in the period 2020-2025 (based on SSP2)
 
 # Reading bilateral migrant stocks from 2017
 migstock_matrix = XLSX.readdata(joinpath(@__DIR__, "../../input_data/WB_Bilateral_Estimates_Migrant_Stocks_2017.xlsx"), "Bilateral_Migration_2017!A2:HJ219") 
@@ -80,7 +80,7 @@ CSV.write(joinpath(@__DIR__,"../../data_mig/migstockinit_update.csv"), migstock_
 # Getting age distributions
 agegroup = CSV.read(joinpath(@__DIR__, "../../input_data/agegroup.csv"), DataFrame)
 agedist = @from i in agegroup begin
-    @where i.period == 2015 && i.scen == "SSP2"
+    @where i.period == 2020 && i.scen == "SSP2"
     @select {i.fundregion, i.age, i.pop, migshare = i.share}
     @collect DataFrame
 end

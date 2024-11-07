@@ -40,14 +40,13 @@ end
 
 
 ####################### Update SSP population scenarios #################################################
-# Source:  K.C., S., Lutz, W. , Potančoková, M. , Abel, G. , Barakat, B., Eder, J., Goujon, A. , Jurasszovich, S., et al. (2020). 
-# Global population and human capital projections for Shared Socioeconomic Pathways – 2015 to 2100, Revision-2018. 
-# https://pure.iiasa.ac.at/id/eprint/17550/
-ssp1_update = CSV.read("C:/Users/hmrb/Stanford_Benveniste Dropbox/Hélène Benveniste/YSSP-IIASA/Samir_data/SSP1_2018update.csv", DataFrame)
-ssp2_update = CSV.read("C:/Users/hmrb/Stanford_Benveniste Dropbox/Hélène Benveniste/YSSP-IIASA/Samir_data/SSP2_2018update.csv", DataFrame)
-ssp3_update = CSV.read("C:/Users/hmrb/Stanford_Benveniste Dropbox/Hélène Benveniste/YSSP-IIASA/Samir_data/SSP3_2018update.csv", DataFrame)
-ssp4_update = CSV.read("C:/Users/hmrb/Stanford_Benveniste Dropbox/Hélène Benveniste/YSSP-IIASA/Samir_data/SSP4_2018update.csv", DataFrame)
-ssp5_update = CSV.read("C:/Users/hmrb/Stanford_Benveniste Dropbox/Hélène Benveniste/YSSP-IIASA/Samir_data/SSP5_2018update.csv", DataFrame)
+# Source:  Wittgenstein Center (WIC) Population and Human Capital Projections, version v.1.3 (February 2024). 
+# https://zenodo.org/records/10618931
+ssp1_update = CSV.read("C:/Users/hmrb/Stanford_Benveniste Dropbox/Hélène Benveniste/YSSP-IIASA/Samir_data/SSP1_V13_2024update.csv", DataFrame)
+ssp2_update = CSV.read("C:/Users/hmrb/Stanford_Benveniste Dropbox/Hélène Benveniste/YSSP-IIASA/Samir_data/SSP2_V13_2024update.csv", DataFrame)
+ssp3_update = CSV.read("C:/Users/hmrb/Stanford_Benveniste Dropbox/Hélène Benveniste/YSSP-IIASA/Samir_data/SSP3_V13_2024update.csv", DataFrame)
+ssp4_update = CSV.read("C:/Users/hmrb/Stanford_Benveniste Dropbox/Hélène Benveniste/YSSP-IIASA/Samir_data/SSP4_V13_2024update.csv", DataFrame)
+ssp5_update = CSV.read("C:/Users/hmrb/Stanford_Benveniste Dropbox/Hélène Benveniste/YSSP-IIASA/Samir_data/SSP5_V13_2024update.csv", DataFrame)
 
 ssp1_update.scen = repeat(["SSP1"], size(ssp1_update,1))
 ssp2_update.scen = repeat(["SSP2"], size(ssp2_update,1))
@@ -58,90 +57,50 @@ ssp5_update.scen = repeat(["SSP5"], size(ssp5_update,1))
 ssp_update = vcat(ssp1_update, ssp2_update, ssp3_update, ssp4_update, ssp5_update)
 
 # Full update: use population sizes and demographic distribution of updated scenarios
-# Convert 21 age groups to 25 age groups: assume no population over 105 yers old
-ssp_update.ageno_22 = zeros(size(ssp_update,1))
-ssp_update.ageno_23 = zeros(size(ssp_update,1))
-ssp_update.ageno_24 = zeros(size(ssp_update,1))
-ssp_update.ageno_25 = zeros(size(ssp_update,1))
-
-ssp_update = stack(
-    ssp_update[!,Not([:ageno_0])],
-    [:ageno_1,:ageno_2,:ageno_3,:ageno_4,:ageno_5,:ageno_6,:ageno_7,:ageno_8,:ageno_9,:ageno_10,:ageno_11,:ageno_12,:ageno_13,:ageno_14,:ageno_15,:ageno_16,:ageno_17,:ageno_18,:ageno_19,:ageno_20,:ageno_21,:ageno_22,:ageno_23,:ageno_24,:ageno_25]
+# Age: attribute newborns (agest = -5) to the 0-4 year old category
+ssp_update.agest = [ssp_update[i,:agest] == -5 ? 0 : ssp_update[i,:agest] for i in eachindex(ssp_update[:,1])]
+ssp_update = rename(
+    combine(
+        groupby(
+            ssp_update,
+            [:scen,:Time,:region,:edu,:agest,:sex]
+        ),
+        :pop => sum, :emi => sum, :imm => sum
+    ),
+    :pop_sum => :pop, :emi_sum => :emi, :imm_sum => :imm
 )
-ssp_update.age = (map(x->parse(Int,SubString(x,7)), ssp_update.variable) .- 1 ) .* 5
-rename!(ssp_update, :value => :pop_update)
 
-# Keep only population numbers for each age group, each sex and disaggregated education levels, and distinct countries (isono < 900)
+# Keep only population numbers for distinct countries (isono < 900)
+ssp_update[!,:region] = map(x -> parse(Int, SubString(x, 4)), ssp_update[!,:region])
 filter!(
-    row -> (row.sexno != 0 && row.eduno !=0 && row.isono < 900),
+    row -> (row.region < 900),
     ssp_update
 )
-ssp_update.sex = [(ssp_update[i,:sexno] == 1 ? "male" : "female") for i in eachindex(ssp_update[:,1])]
-select!(ssp_update, [:scen,:year,:isono,:eduno,:age,:sex,:pop_update])
 
-# Convert 10 education levels (Under 15, No Education, Incomplete Primary, Primary, Lower Secondary, Upper Secondary, Post Secondary, Short Post Secondary, Bachelor, Master and higher)
-# to 6 education levels (no education, some primary, primary completed, lower secondary completed, upper secondary completed, post secondary completed)
-ssp_update[!,:edu_6] = [(ssp_update[i,:eduno] == 1 || ssp_update[i,:eduno] == 2) ? "e1" : (ssp_update[i,:eduno] == 3 ? "e2" : (ssp_update[i,:eduno] == 4 ? "e3" : (ssp_update[i,:eduno] == 5 ? "e4" : (ssp_update[i,:eduno] == 6 ? "e5" : "e6")))) for i in eachindex(ssp_update[:,1])]
+ssp_update.sex = [(ssp_update[i,:sex] == "m" ? "male" : "female") for i in eachindex(ssp_update[:,1])]
 
 ssp.region = map(x -> parse(Int, SubString(x, 3)), ssp.region)
 
 ssp = leftjoin(
     ssp,
     rename(
-        combine(
-            groupby(
-                ssp_update, 
-                [:year,:isono,:scen,:edu_6,:age,:sex]
-            ), 
-            :pop_update => sum
-        ),
-        :year => :period, :isono => :region, :edu_6 => :edu, :pop_update_sum => :pop_update
+        ssp_update,
+        :Time => :period, :agest => :age, :pop => :pop_update, :emi => :outmig_update, :imm => :inmig_update
     ),
     on = [:scen, :period, :region, :edu, :age, :sex]
 )
 
-
-# We assume that for each country, SSP scenario, and demographic group, the ratios inmig/pop and outmig/pop remain the same for the update
-ssp.inmig_update = ssp.inmig .* ssp.pop_update ./ ssp.pop
-ssp.outmig_update = ssp.outmig .* ssp.pop_update ./ ssp.pop
-replace!(ssp.inmig_update, NaN => 0.0)
-replace!(ssp.outmig_update, NaN => 0.0)
-
-# We then rescale inmig_update to make sure that for each SSP scenario, time period, and demographic group, the sum over countries of outmig_update = the sum over countries of outmig_update
-ssp = innerjoin(
-    ssp,
-    combine(
-        groupby(
-            ssp,
-            [:scen, :period, :sex, :age, :edu]
-        ),
-        :inmig_update => sum, :outmig_update => sum
-    ),
-    on = [:scen, :period, :sex, :age, :edu]
-)
-ssp.inmig_update = ssp.inmig_update .* ssp.outmig_update_sum ./ ssp.inmig_update_sum
-replace!(ssp.inmig_update, NaN => 0.0)
-
 # Keep only updated versions and rename them 
-select!(ssp, Not([:pop,:outmig,:inmig,:inmig_update_sum,:outmig_update_sum]))
+select!(ssp, Not([:pop,:outmig,:inmig]))
 rename!(ssp, :pop_update => :pop, :inmig_update => :inmig, :outmig_update => :outmig)
 
-CSV.write("C:/Users/hmrb/Stanford_Benveniste Dropbox/Hélène Benveniste/migration-exposure-immobility/results_large/ssp_update.csv", ssp)
-
+# Remove missing values in the updated version: year 2015, and the Channel Islands
+dropmissing!(ssp)
 
 
 #################################################### Computing age of migrants at time of migration ###################################################
 # Sum projections for all sexes and educations: population + inmigration per scenario, country, time period, and age
 agegroup_c = combine(groupby(ssp, [:age, :region, :period, :scen]), d -> (inmig = sum(d.inmig), pop = sum(d.pop)))
-
-# The Channels Islands do not have a proper ISO code, instead Jersey (832, JEY) and Guernsey (831, GGY) do. 
-# Based on census data for 2011, we attribute 60% of the Channels population to Jersey and the rest to Guernsey.
-channelsind = findall(agegroup_c[!,:region] .== 830)
-for i in channelsind
-    push!(agegroup_c, [agegroup_c[!,:age][i], 831, agegroup_c[!,:period][i], agegroup_c[!,:scen][i], agegroup_c[!,:inmig][i]*0.4, agegroup_c[!,:pop][i]*0.4])
-    push!(agegroup_c, [agegroup_c[!,:age][i], 832, agegroup_c[!,:period][i], agegroup_c[!,:scen][i], agegroup_c[!,:inmig][i]*0.6, agegroup_c[!,:pop][i]*0.6])
-end
-deleteat!(agegroup_c, channelsind)
 
 # Convert to FUND region level: weight by immigrant flows
 agegroup_c = innerjoin(agegroup_c, rename(isonum_fundregion, :isonum => :region), on = :region)
@@ -161,8 +120,8 @@ regionsdf = DataFrame(fundregion = regions, index = 1:16)
 agegroup = innerjoin(agegroup, regionsdf, on = :fundregion)
 sort!(agegroup, [:scen, :period, :index, :age])
 
-# When testing, we find that every region, for every time period and every scenario, has basically the same age distribution for migrants
-# Thus we simplify and provide the agegroup parameter for the USA for SSP2 in 2015 as constant for all regions, time periods and scenarios
+# When testing, we find that every region, for every time period and every scenario, has a similar age distribution for migrants
+# Thus we simplify and provide the agegroup parameter for the USA for SSP2 in 2020 as constant for all regions, time periods and scenarios
 agegroup_simple = DataFrame(age=unique(agegroup[!,:age]), share=agegroup[1:length(unique(agegroup[!,:age])),:share])
 
 # Linearizing age groups from 5-age to agely values. Note: a value for age x actually represents age group at the beginning of the five year period                                                
