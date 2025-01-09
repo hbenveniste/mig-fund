@@ -2,79 +2,11 @@ using Distributions, CSV, DelimitedFiles
 
 
 ###############################################################################################################################
-######################### Function to calculate quintile distribution of damages and abatement costs ##########################
-###############################################################################################################################
-function quintile_dist(elast, income_d)
-    value = income_d .^ elast
-    for r in 1:16
-        value[r,:] = value[r,:] ./ sum(value[r,:])
-    end
-    return value
-end
-
-
-###############################################################################################################################
 ######################### Function to convert a year value into an integer corresponding to FUND's time index #################
 ###############################################################################################################################
 function getindexfromyear(year::Int)
     baseyear = 1950
     return year - baseyear + 1
-end
-
-
-###############################################################################################################################
-######################### Functions to compute move ###########################################################################
-###############################################################################################################################
-# With gravity approach at the income quintile level
-function compute_move(
-        pop_s::Float64,
-        pop_d::Float64,
-        ypc_s::Float64, 
-        ypc_r::Float64, 
-        distance::Float64,
-        remres::Float64,
-        remcost::Float64,
-        comofflang::Float64,
-        beta0::Float64,
-        beta1::Float64,
-        beta2::Float64,
-        beta4::Float64,
-        beta5::Float64,
-        beta7::Float64,
-        beta8::Float64,
-        beta9::Float64,
-        beta10::Float64
-    )
-    x = exp(beta0) * pop_s^beta1 * pop_d^beta2 * ypc_s^beta4 * ypc_r^beta5 * distance^beta7 * exp(beta8 * remres) * exp(beta9 * remcost) * exp(beta10 * comofflang)
-    return x
-end
-
-# Calculate the repartition of migrants in destination quintiles
-function compute_destdistrib(
-        ypc_r::Float64,
-        gamma0::Float64,
-        gamma1::Float64
-    )
-    x = exp(gamma0) * ypc_r^gamma1
-    return x
-end
-
-
-###############################################################################################################################
-######################### Function to compute remshare ########################################################################
-###############################################################################################################################
-function compute_remshare(
-        ypc_d::Float64, 
-        ypc_r::Float64, 
-        delta0::Float64,
-        delta1::Float64,
-        delta2::Float64,
-        delta3::Float64,
-        remcost::Float64,
-        remres::Float64,
-    )
-    x = exp(delta0) * ypc_d^delta1 * ypc_r^delta2 * exp(delta3 * remcost) * remres
-    return x
 end
 
 
