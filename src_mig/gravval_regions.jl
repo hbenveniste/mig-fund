@@ -13,7 +13,7 @@ beta_endo = CSV.read(joinpath(@__DIR__,"../results/gravity/beta_endo.csv"), Data
 # gravity_endo has data in log. We transform it back.
 data_endo = gravity_endo[:,[:year,:orig,:dest,:flow_AzoseRaftery,:distance,:pop_orig,:pop_dest,:ypc_orig,:ypc_dest,:exp_residual,:remcost,:comofflang]]
 for name in [:flow_AzoseRaftery,:distance,:pop_orig,:pop_dest,:ypc_orig,:ypc_dest,:exp_residual,:remcost,:comofflang]
-    data_endo[!,name] = [exp(data_endo[!,name][i]) for i in eachindex(data_endo[:,1])]
+    data_endo[!,name] = [exp(data_endo[i,name]) for i in eachindex(data_endo[:,1])]
 end
 
 ############################################ Obtain residuals from gravity model at FUND regions level #####################################

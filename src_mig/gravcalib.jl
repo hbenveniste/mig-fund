@@ -59,9 +59,9 @@ earthradius = 6372.8        # in km
 
 # Calculating distances between countries as distances between their capital cities, using the Haversine formula of the Distances package
 dist = DataFrame(orig_code = repeat(loc[!,:country_code], inner = size(loc,1)), lat_or = repeat(loc[!,:Latitude], inner = size(loc,1)), lon_or = repeat(loc[!,:Longitude], inner = size(loc,1)), dest_code = repeat(loc[!,:country_code], outer = size(loc,1)), lat_dest = repeat(loc[!,:Latitude], outer = size(loc,1)), lon_dest = repeat(loc[!,:Longitude], outer = size(loc,1)))
-dist[!,:loc_or] = [tuple(dist[!,:lat_or][i], dist[!,:lon_or][i]) for i in 1:size(dist,1)]
-dist[!,:loc_dest] = [tuple(dist[!,:lat_dest][i], dist[!,:lon_dest][i]) for i in 1:size(dist,1)]
-dist[!,:distance] = [haversine(dist[!,:loc_or][i], dist[!,:loc_dest][i], earthradius) for i in 1:size(dist, 1)]
+dist[!,:loc_or] = [tuple(dist[i,:lat_or], dist[i,:lon_or]) for i in 1:size(dist,1)]
+dist[!,:loc_dest] = [tuple(dist[i,:lat_dest], dist[i,:lon_dest]) for i in 1:size(dist,1)]
+dist[!,:distance] = [haversine(dist[i,:loc_or], dist[i,:loc_dest], earthradius) for i in 1:size(dist, 1)]
 
 iso3c_isonum = CSV.read(joinpath(@__DIR__, "../input_data/iso3c_isonum.csv"), DataFrame) 
 dist = innerjoin(dist, rename(iso3c_isonum, :isonum => :orig_code), on = :orig_code)
@@ -283,7 +283,7 @@ logdata = DataFrame(
     expo_dest = data[!,:expo_dest]
 )
 for name in [:flow_Abel, :mig_ratio, :mig_ratio_tot, :pop_orig, :pop_dest, :area_orig, :area_dest, :density_orig, :density_dest, :density_ratio, :gdp_orig, :gdp_dest, :ypc_orig, :ypc_dest, :ypc_ratio, :ypc_other, :distance]
-    logdata[!,name] = [log(data[!,name][i]) for i in eachindex(logdata[:,1])]
+    logdata[!,name] = [log(data[i,name]) for i in eachindex(logdata[:,1])]
 end
 logdata_ar = DataFrame(
     year = data_ar[!,:year0], 
@@ -296,7 +296,7 @@ logdata_ar = DataFrame(
     expo_dest = data_ar[!,:expo_dest]
 )
 for name in [:flow_AzoseRaftery, :mig_ratio, :mig_ratio_tot, :pop_orig, :pop_dest, :area_orig, :area_dest, :density_orig, :density_dest, :density_ratio, :gdp_orig, :gdp_dest, :ypc_orig, :ypc_dest, :ypc_ratio, :ypc_other, :distance]
-    logdata_ar[!,name] = [log(data_ar[!,name][i]) for i in eachindex(logdata_ar[:,1])]
+    logdata_ar[!,name] = [log(data_ar[i,name]) for i in eachindex(logdata_ar[:,1])]
 end
 
 # Remove rows with distance = 0 or flow = 0

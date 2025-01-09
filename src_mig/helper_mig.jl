@@ -1,6 +1,9 @@
-using Distributions
+using Distributions, CSV, DelimitedFiles
 
-# Function to calculate quintile distribution of damages and abatement costs.
+
+###############################################################################################################################
+######################### Function to calculate quintile distribution of damages and abatement costs ##########################
+###############################################################################################################################
 function quintile_dist(elast, income_d)
     value = income_d .^ elast
     for r in 1:16
@@ -9,19 +12,77 @@ function quintile_dist(elast, income_d)
     return value
 end
 
-"""
-Converts a year value into an integer corresponding to fund's time index.
-"""
+
+###############################################################################################################################
+######################### Function to convert a year value into an integer corresponding to FUND's time index #################
+###############################################################################################################################
 function getindexfromyear(year::Int)
     baseyear = 1950
     return year - baseyear + 1
 end
 
 
-"""
-Reads parameter csvs from data directory into a dictionary (parameter_name => default_value).
-For parameters defined as distributions, this sets the value to their mode.
-""" 
+###############################################################################################################################
+######################### Functions to compute move ###########################################################################
+###############################################################################################################################
+# With gravity approach at the income quintile level
+function compute_move(
+        pop_s::Float64,
+        pop_d::Float64,
+        ypc_s::Float64, 
+        ypc_r::Float64, 
+        distance::Float64,
+        remres::Float64,
+        remcost::Float64,
+        comofflang::Float64,
+        beta0::Float64,
+        beta1::Float64,
+        beta2::Float64,
+        beta4::Float64,
+        beta5::Float64,
+        beta7::Float64,
+        beta8::Float64,
+        beta9::Float64,
+        beta10::Float64
+    )
+    x = exp(beta0) * pop_s^beta1 * pop_d^beta2 * ypc_s^beta4 * ypc_r^beta5 * distance^beta7 * exp(beta8 * remres) * exp(beta9 * remcost) * exp(beta10 * comofflang)
+    return x
+end
+
+# Calculate the repartition of migrants in destination quintiles
+function compute_destdistrib(
+        ypc_r::Float64,
+        gamma0::Float64,
+        gamma1::Float64
+    )
+    x = exp(gamma0) * ypc_r^gamma1
+    return x
+end
+
+
+###############################################################################################################################
+######################### Function to compute remshare ########################################################################
+###############################################################################################################################
+function compute_remshare(
+        ypc_d::Float64, 
+        ypc_r::Float64, 
+        delta0::Float64,
+        delta1::Float64,
+        delta2::Float64,
+        delta3::Float64,
+        remcost::Float64,
+        remres::Float64,
+    )
+    x = exp(delta0) * ypc_d^delta1 * ypc_r^delta2 * exp(delta3 * remcost) * remres
+    return x
+end
+
+
+###############################################################################################################################
+######################### Functions to charge parameters of multiple dimensions ###############################################
+###############################################################################################################################
+# Reads parameter csvs from data directory into a dictionary (parameter_name => default_value).
+# For parameters defined as distributions, this sets the value to their mode.
 function load_parameters_mig(datadir = joinpath(dirname(@__FILE__), "..", "data"))
     files = readdir(datadir)
     filter!(i -> i != "desktop.ini", files)
@@ -33,24 +94,20 @@ function load_parameters_mig(datadir = joinpath(dirname(@__FILE__), "..", "data"
 end
 
 
-# For Truncated Gamma distributions, fund uses the mode of the untrucated distribution as it's default value.
+# For Truncated Gamma distributions, fund uses the mode of the untrucated distribution as its default value.
 import StatsBase.mode
 function mode(d::Truncated{Gamma{Float64},Continuous})
     return mode(d.untruncated)
 end
 
 
-"""
-Returns the mode for a distributional parameter; returns the value if it's not a distribution.
-"""
+# Returns the mode for a distributional parameter; returns the value if it's not a distribution.
 getbestguess(p) = isa(p, ContinuousUnivariateDistribution) ? mode(p) : p
 
 
-"""
-Converts the original parameter dictionary loaded from the data files into a dictionary of default parameter values.
-Original dictionary: parameter_name => string of distributions or values from csv file
-Final dictionary: parameter_name => default value
-"""
+# Converts the original parameter dictionary loaded from the data files into a dictionary of default parameter values.
+# Original dictionary: parameter_name => string of distributions or values from csv file
+# Final dictionary: parameter_name => default value
 function prepparameters_mig!(parameters)
     for (param_name, p) in parameters
         column_count = size(p,2)
@@ -140,11 +197,9 @@ function prepparameters_mig!(parameters)
 end
 
 
-"""
-Takes as input a single parameter value. 
-If the parameter value is a string containing a distribution definition, it returns the distribtion.
-If the parameter value is a number, it returns the number.
-"""
+# Takes as input a single parameter value. 
+# If the parameter value is a string containing a distribution definition, it returns the distribtion.
+# If the parameter value is a number, it returns the number.
 function convertparametervalue(pv)
     if isa(pv,AbstractString)
         if startswith(pv,"~") && endswith(pv,")")

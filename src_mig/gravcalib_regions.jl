@@ -10,7 +10,7 @@ gravity_endo = CSV.read(joinpath(@__DIR__,"../results/gravity/gravity_endo_updat
 # gravity_endo has data in log. We transform it back.
 data = gravity_endo[:,[:year,:orig,:dest,:flow_AzoseRaftery,:pop_orig,:pop_dest,:ypc_orig,:ypc_dest]]
 for name in [:flow_AzoseRaftery,:pop_orig,:pop_dest,:ypc_orig,:ypc_dest,]
-    data[!,name] = [exp(data[!,name][i]) for i in eachindex(data[:,1])]
+    data[!,name] = [exp(data[i,name]) for i in eachindex(data[:,1])]
 end
 data[!,:gdp_orig] = data[:,:pop_orig] .* data[:,:ypc_orig]
 data[!,:gdp_dest] = data[:,:pop_dest] .* data[:,:ypc_dest]
@@ -50,7 +50,7 @@ logdata_reg = DataFrame(
     comofflang = data_reg[!,:comofflang]
 )
 for name in [:migflow, :pop_o, :pop_d, :ypc_o, :ypc_d, :distance]
-    logdata_reg[!,name] = [log(data_reg[!,name][i]) for i in eachindex(logdata_reg[:,1])]
+    logdata_reg[!,name] = [log(data_reg[!,name]) for i in eachindex(logdata_reg[:,1])]
 end
 
 # Remove rows with distance = 0 or flow = 0
