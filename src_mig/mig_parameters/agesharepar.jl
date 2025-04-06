@@ -8,13 +8,13 @@ edu = ["e1","e2","e3","e4","e5","e6"]
 
 ################## Prepare population data: original SSP ####################
 # Original version:
-# Source:  Wittgenstein Center (WIC) Population and Human Capital Projections, version v.1.3 (February 2024). 
-# https://zenodo.org/records/10618931
-ssp1 = CSV.read("C:/Users/hmrb/Stanford_Benveniste Dropbox/Hélène Benveniste/YSSP-IIASA/Samir_data/SSP1_V13_2024update.csv", DataFrame)
-ssp2 = CSV.read("C:/Users/hmrb/Stanford_Benveniste Dropbox/Hélène Benveniste/YSSP-IIASA/Samir_data/SSP2_V13_2024update.csv", DataFrame)
-ssp3 = CSV.read("C:/Users/hmrb/Stanford_Benveniste Dropbox/Hélène Benveniste/YSSP-IIASA/Samir_data/SSP3_V13_2024update.csv", DataFrame)
-ssp4 = CSV.read("C:/Users/hmrb/Stanford_Benveniste Dropbox/Hélène Benveniste/YSSP-IIASA/Samir_data/SSP4_V13_2024update.csv", DataFrame)
-ssp5 = CSV.read("C:/Users/hmrb/Stanford_Benveniste Dropbox/Hélène Benveniste/YSSP-IIASA/Samir_data/SSP5_V13_2024update.csv", DataFrame)
+# Source:  Wittgenstein Center (WIC) Population and Human Capital Projections, version v.14 (February 2025). 
+# https://zenodo.org/records/14718294
+ssp1 = CSV.read("C:/Users/hmrb/Stanford_Benveniste Dropbox/Hélène Benveniste/YSSP-IIASA/Samir_data/PROJresult_AGE_SSP1_V14.csv", DataFrame)
+ssp2 = CSV.read("C:/Users/hmrb/Stanford_Benveniste Dropbox/Hélène Benveniste/YSSP-IIASA/Samir_data/PROJresult_AGE_SSP2_V14.csv", DataFrame)
+ssp3 = CSV.read("C:/Users/hmrb/Stanford_Benveniste Dropbox/Hélène Benveniste/YSSP-IIASA/Samir_data/PROJresult_AGE_SSP3_V14.csv", DataFrame)
+ssp4 = CSV.read("C:/Users/hmrb/Stanford_Benveniste Dropbox/Hélène Benveniste/YSSP-IIASA/Samir_data/PROJresult_AGE_SSP4_V14.csv", DataFrame)
+ssp5 = CSV.read("C:/Users/hmrb/Stanford_Benveniste Dropbox/Hélène Benveniste/YSSP-IIASA/Samir_data/PROJresult_AGE_SSP5_V14.csv", DataFrame)
 
 ssp1.scen = repeat(["SSP1"], size(ssp1,1))
 ssp2.scen = repeat(["SSP2"], size(ssp2,1))
